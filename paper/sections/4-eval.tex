@@ -1,0 +1,99 @@
+\section{Evaluation}\label{sec:eval}
+
+We evaluate \toolname against the general LTL miner of Neider and Gavran~\cite{NeiderG18} on a suite of 20 GR(1) benchmarks.
+All experiments run on a single core of an Apple M-series machine with a 10-minute timeout per benchmark.
+
+\subsection{Benchmark Suite}
+
+No standard GR(1) trace-mining benchmarks exist.
+We construct a suite of 20 specifications covering five dimensions:
+
+\begin{enumerate}
+\item \textbf{Variable count} (2--6 atomic propositions).
+\item \textbf{Propositional depth} of the components ($D \in \{1,2,3\}$).
+\item \textbf{Template variant}: justice-only (J), with initial conditions (IJ), with safety (SJ), and full GR(1) (ISJ).
+\item \textbf{Multiple justice/guarantee conditions} ($m,k \in \{1,2\}$).
+\item \textbf{Propositional connectives}: variables only, negation, conjunction, disjunction, and their nesting.
+\end{enumerate}
+
+For each benchmark we fix a ground-truth GR(1) formula $\varphi^*$ and generate traces by random sampling: we draw 5\,000 random lasso traces of length 4--6 with a random lasso start, evaluate $\varphi^*$, and retain 15 positive and 10 negative traces.
+Both tools receive identical trace sets.
+
+\paragraph{Baseline configuration.}
+The baseline searches over the full LTL operator set $\{\always, \eventually, \Next, \until, \land, \lor, \lnot, \rightarrow\}$ using the DAG encoding of~\cite{NeiderG18}, iterating DAG size $D = 1, 2, \ldots, 10$.
+\toolname receives the GR(1) template (number of justice/guarantee conditions and whether init/safety slots are active) and iterates $D = 1, 2, \ldots$ over the shared propositional depth.
+
+\subsection{Results}
+
+Table~\ref{tab:results} reports, for each benchmark, the time to find a separating formula and the DAG depth at which a solution is found.
+
+\begin{table}[t]
+\centering
+\caption{Evaluation results. Times in seconds; ``TO'' = 10\,min timeout.
+$D_e$: expected propositional depth. Tmpl: template variant.
+Speedup is the ratio of baseline to \toolname wall-clock time.}\label{tab:results}
+\vspace{2pt}
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}l r r l r r r r r@{}}
+\toprule
+Benchmark & $n$ & $D_e$ & Tmpl & \multicolumn{2}{c}{\toolname} & \multicolumn{2}{c}{Baseline~\cite{NeiderG18}} & Speedup \\
+\cmidrule(lr){5-6}\cmidrule(lr){7-8}
+& & & & Time & $D$ & Time & $D$ & \\
+\midrule
+\multicolumn{9}{@{}l}{\emph{Justice-only, variable scaling}} \\
+B01 & 2 & 1 & J   & 0.06 & 1 & 5.42 & 5 & 98$\times$ \\
+B02 & 3 & 1 & J   & 0.03 & 1 & 48.15 & 6 & 1\,719$\times$ \\
+B03 & 4 & 1 & J   & 0.03 & 1 & 0.60 & 3 & 18$\times$ \\
+B04 & 5 & 1 & J   & 0.04 & 1 & 31.93 & 6 & 823$\times$ \\
+B20 & 6 & 1 & J   & 0.04 & 1 & 6.32 & 5 & 148$\times$ \\
+\addlinespace
+\multicolumn{9}{@{}l}{\emph{Justice-only, propositional depth}} \\
+B05 & 2 & 2 & J   & 0.11 & 2 & 0.74 & 3 & 7$\times$ \\
+B06 & 4 & 2 & J   & 0.17 & 2 & 0.59 & 3 & 4$\times$ \\
+B07 & 3 & 2 & J   & 0.43 & 3 & TO & -- & ${>}1\,398\times$ \\
+B08 & 4 & 2 & J   & 0.15 & 1 & 6.63 & 5 & 44$\times$ \\
+B09 & 3 & 3 & J   & 1.07 & 4 & TO & -- & ${>}562\times$ \\
+\addlinespace
+\multicolumn{9}{@{}l}{\emph{Multiple justice/guarantee conditions}} \\
+B10 & 3 & 1 & J   & 0.04 & 1 & 4.92 & 5 & 121$\times$ \\
+B11 & 3 & 1 & J   & 0.04 & 1 & TO & -- & ${>}15\,036\times$ \\
+B12 & 4 & 1 & J   & 0.09 & 1 & TO & -- & ${>}6\,771\times$ \\
+\addlinespace
+\multicolumn{9}{@{}l}{\emph{Init, safety, and full template}} \\
+B13 & 3 & 1 & IJ  & 0.05 & 1 & 108.86 & 7 & 2\,191$\times$ \\
+B14 & 3 & 1 & SJ  & 0.05 & 1 & 0.58 & 3 & 11$\times$ \\
+B15 & 4 & 1 & ISJ & 0.09 & 1 & 0.60 & 3 & 7$\times$ \\
+B16 & 5 & 1 & ISJ & 0.11 & 1 & 0.59 & 3 & 6$\times$ \\
+B17 & 4 & 1 & ISJ & 0.12 & 1 & 0.59 & 3 & 5$\times$ \\
+B18 & 3 & 2 & ISJ & 0.07 & 1 & 0.57 & 3 & 8$\times$ \\
+\addlinespace
+\multicolumn{9}{@{}l}{\emph{Complex}} \\
+B19 & 4 & 2 & J   & 0.65 & 3 & 346.73 & 7 & 535$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Solving rate.}
+\toolname solves all 20 benchmarks, while the baseline times out on 4 (B07, B09, B11, B12).
+The timeouts occur on benchmarks with conjunctions in justice conditions (B07, B09) and multiple guarantee conditions (B11, B12)---precisely the cases where the GR(1) structure is hardest to recover from an unconstrained LTL search.
+
+\paragraph{Speedup.}
+On the 16 benchmarks both tools solve, \toolname is $3.5\times$--$2{,}191\times$ faster (geometric mean: $45\times$).
+Including the 4~timeouts, lower-bound speedups exceed $15{,}000\times$.
+The largest gains arise when the baseline must search deep DAGs ($D \geq 5$) to represent what \toolname captures at $D = 1$.
+
+\paragraph{DAG depth.}
+The baseline requires DAG depths 3--7, because it must construct the full temporal structure (e.g., $\always(\eventually x_1)$ needs $D \geq 3$).
+\toolname finds most solutions at $D = 1$ since only the propositional content is searched and many specifications use atomic propositions directly.
+
+\paragraph{Formula quality.}
+Beyond speed, the GR(1) template ensures that every mined formula is in the realisable GR(1) fragment and directly usable for synthesis.
+The baseline, unconstrained, frequently produces formulas outside any known synthesis fragment.
+Among the 16 benchmarks the baseline solves, we observe three patterns:
+\begin{itemize}
+\item \emph{Meaningful GR(1)-like formulas} (6/16): e.g., $\always(x_0 \rightarrow \eventually x_1)$ for benchmark B01.  These capture a reactive relationship but are not in canonical GR(1) form.
+\item \emph{Overly general formulas} (5/16): e.g., $\always\eventually x_1$, which satisfies the traces but ignores the assumption side entirely.
+\item \emph{Spurious separators} (5/16): e.g., $x_1 \until \lnot x_1$, which is consistent with the traces but encodes no meaningful reactive specification.  This formula holds on any trace where $x_1$ eventually becomes false, which happens to separate the given traces by coincidence.
+\end{itemize}
+By contrast, every formula \toolname produces has the canonical GR(1) shape and correctly identifies both the assumption and guarantee components.

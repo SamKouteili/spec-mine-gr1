@@ -1,0 +1,57 @@
+\section{Preliminaries}\label{sec:prelims}
+
+\subsection{Linear Temporal Logic}
+
+We consider LTL over a set of atomic propositions $\mathit{AP} = \{x_0, \ldots, x_{n-1}\}$.
+Formulas are built from the grammar
+\[
+  \varphi ::= x \mid \lnot\varphi \mid \varphi \land \varphi \mid
+  \Next\varphi \mid \varphi \until \varphi
+\]
+where $x \in \mathit{AP}$, and the derived operators
+$\eventually\varphi \equiv \mathit{true} \until \varphi$ and
+$\always\varphi \equiv \lnot\eventually\lnot\varphi$.
+Semantics are defined over infinite words $w \in (2^{\mathit{AP}})^\omega$ in the standard way~\cite{Pnueli77}.
+
+\subsection{Lasso Traces}
+
+An \emph{ultimately periodic word} (lasso trace) is a pair $(u, v)$ with $u \in (2^{\mathit{AP}})^*$ and $v \in (2^{\mathit{AP}})^+$, representing the infinite word $u \cdot v^\omega$.
+We store a lasso trace as a finite vector $\sigma = \sigma[0] \cdots \sigma[L{-}1]$ together with a \emph{lasso start} index $\ell$, so that $\sigma[\ell..L{-}1]$ is the repeating loop.
+For any position $t < L$, the successor is $t{+}1$ if $t < L{-}1$, and $\ell$ otherwise.
+We write $\mathit{loop}(\sigma) = \{\ell, \ldots, L{-}1\}$ for the set of loop positions.
+
+\subsection{GR(1) Specifications}\label{sec:gr1}
+
+A \emph{Generalised Reactivity(1)} (GR(1)) specification~\cite{PitermanPS06} over $\mathit{AP}$ has the form
+\begin{equation}\label{eq:gr1}
+  \underbrace{(\varphi_I^e \land \always \varphi_S^e \land
+  \textstyle\bigwedge_{i=1}^{m} \always\eventually J_i)}_{\text{assumptions } A}
+  \;\rightarrow\;
+  \underbrace{(\varphi_I^s \land \always \varphi_S^s \land
+  \textstyle\bigwedge_{j=1}^{k} \always\eventually G_j)}_{\text{guarantees } \mathcal{G}}
+\end{equation}
+where $\varphi_I^e, \varphi_I^s$ are propositional \emph{initial conditions},
+$\varphi_S^e, \varphi_S^s$ are propositional \emph{safety conditions},
+and $J_1, \ldots, J_m$ and $G_1, \ldots, G_k$ are propositional
+\emph{justice} (liveness) conditions.
+Every component is a propositional formula over $\mathit{AP}$ (i.e., built from $\land$, $\lor$, $\lnot$ and variables only); the temporal operators $\always$, $\eventually$ appear only in the fixed positions shown above.
+
+GR(1) is the largest fragment of LTL for which reactive synthesis
+is known to be polynomial: the three-nested fixed-point algorithm of Piterman~et~al.~\cite{PitermanPS06} runs in $O(n^3 m k)$ on a game graph with $n$ states, compared to the 2EXPTIME-complete general LTL synthesis problem~\cite{PnueliR89}.
+
+\paragraph{Semantics on lasso traces.}
+A lasso trace $\sigma$ satisfies $\always\eventually J$ iff $J$ holds at some position in $\mathit{loop}(\sigma)$; it satisfies $\always \varphi_S$ iff $\varphi_S$ holds at every position; and it satisfies $\varphi_I$ iff $\varphi_I$ holds at position~0.
+The full formula~\eqref{eq:gr1} is an implication: $\sigma$ satisfies it iff either some assumption fails, or all guarantees hold.
+
+\subsection{The Specification Mining Problem}
+
+\begin{definition}[Trace separation]\label{def:mining}
+Given a set of positive traces $P$ and negative traces $N$,
+the \emph{specification mining problem} is to find a formula $\varphi$
+such that $\sigma \models \varphi$ for all $\sigma \in P$ and
+$\sigma \not\models \varphi$ for all $\sigma \in N$.
+We seek a smallest such formula in a given fragment.
+\end{definition}
+
+When the fragment is unrestricted LTL, this is the problem solved by Neider and Gavran~\cite{NeiderG18}.
+In this work we restrict the fragment to \GRone and exploit its fixed temporal skeleton.

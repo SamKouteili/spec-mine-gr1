@@ -1,0 +1,64 @@
+\documentclass[year=25]{fmcad}
+
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{xspace}
+\usepackage{url}
+
+% Macros
+\newcommand{\always}{\square}
+\newcommand{\eventually}{\Diamond}
+\newcommand{\Next}{\bigcirc}
+\newcommand{\until}{\mathbin{\mathcal{U}}}
+\newcommand{\GRone}{GR(1)\xspace}
+\newcommand{\toolname}{\textsc{GR1Mine}\xspace}
+
+\begin{document}
+
+\title{Template-Guided Specification Mining for GR(1)}
+
+\author{
+  \IEEEauthorblockN{Sam Kouteili}
+  \IEEEauthorblockA{Yale University\\
+  sam.kouteili@yale.edu}
+}
+
+\maketitle
+
+\begin{abstract}
+We present \toolname, a SAT-based tool for mining \GRone specifications
+from lasso-shaped traces. \GRone formulas---of the form
+$(\varphi_I^e \land \always \varphi_S^e \land \bigwedge_i \always\eventually J_i) \rightarrow
+(\varphi_I^s \land \always \varphi_S^s \land \bigwedge_j \always\eventually G_j)$---are
+the fragment of LTL for which reactive synthesis is polynomial, yet no
+prior tool mines them directly from traces.  Existing LTL miners search
+over both temporal and propositional operators, treating GR(1) as just
+another LTL formula.  We exploit the fixed temporal skeleton of \GRone:
+the temporal structure is given by the template, so only
+propositional sub-formulas need to be synthesised.  This eliminates the
+temporal operator semantics---the dominant cost in general LTL
+mining---and decomposes a single large SAT instance into several
+small, independent ones.
+On a benchmark suite of 20~\GRone specifications, \toolname solves
+all~20 while the general LTL miner times out on~4, with speedups
+ranging from $3.5\times$ to over $15{,}000\times$.
+Moreover, the \GRone template guarantees that every mined formula is
+directly usable for reactive synthesis, whereas the baseline frequently
+produces formulas outside any known realisability fragment.
+\end{abstract}
+
+\input{sections/1-intro}
+\input{sections/2-prelims}
+\input{sections/3-algo}
+\input{sections/4-eval}
+\input{sections/5-conclusion}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
