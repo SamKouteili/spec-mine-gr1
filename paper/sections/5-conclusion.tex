@@ -1,3 +1,24 @@
 \section{Conclusion}\label{sec:conclusion}
 
-% TODO: Fill in conclusion
+We presented \toolname, a SAT-based algorithm for mining \GRone
+specifications from lasso traces.
+By fixing the temporal skeleton of the \GRone template and encoding
+only propositional content, \toolname eliminates the need to search
+over temporal operators and produces formulas that are directly
+suitable for reactive synthesis.
+An environment--system variable partition ensures that mined
+specifications respect the assume--guarantee boundary, and
+incremental SAT solving enables efficient enumeration over template
+configurations.
+
+On 60 boolean Spectra benchmarks with 16--218 variables, \toolname
+solves 58/60 within a 10-minute timeout, scaling to
+218~variables---well beyond the reach of ATLAS, which solves
+at most 37/60 (unconstrained) or 25/60 (\GRone-constrained)
+and cannot handle any benchmark beyond 76~variables.
+
+Future work includes extending the trace generator and miner to
+larger variable counts, incorporating a CEGIS loop that
+iteratively refines the mined specification against a ground-truth
+oracle, and supporting richer Spectra specifications through
+automatic booleanisation of enumerated types and integer variables.

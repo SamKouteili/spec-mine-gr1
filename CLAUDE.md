@@ -61,8 +61,8 @@ Three baselines available (all from samples2LTL):
 ## Running
 - Tests: `cd gr1-mining && source .venv/bin/activate && python tests/test_gr1.py`
 - Spectra tests: `python tests/test_spectra.py`
+- **Main evaluation**: `python experiments/eval_main.py` (22 Spectra benchmarks, GR1Mine vs ATLAS[LTL] vs ATLAS[GR1], 5min timeout per miner)
 - Synthetic evaluation: `python experiments/evaluation.py` (20 benchmarks, 5min timeout)
-- Spectra evaluation: `python experiments/eval_spectra.py` (Spectra benchmarks, 5min timeout)
 - Generate plots: `python experiments/plot_results.py`
 
 ## Encoder Interface
@@ -88,20 +88,73 @@ The solving loop in `formulaBuilder/satQuerying.py` and `solverRuns.py` is encod
 - GR1Formula has `evaluate_assumptions()` and `evaluate_guarantees()` methods for classifying traces by which side holds
 - Full GR(1) template with next-state safety implemented and tested
 - Template enumeration: miner discovers (m, k, init, safety) automatically
-- Synthetic eval (20 benchmarks): GR1 20/20, SAT 17/20, DT results pending re-run with fix
-- Spectra eval (12 benchmarks, 16-28 vars): GR1 12/12, SAT 12/12, DT 12/12
-- DT is fastest on Spectra (~1s) but produces decision trees, not GR(1) specs
-- SAT baseline often finds spurious separators (e.g., `x1 U ¬x1`) not usable for synthesis
 - GR1Mine output is always synthesis-ready GR(1)
-- Random trace generation produces few negative traces for large specs. Need biased generation.
-- `evaluation_results.csv` and `spectra_eval_results.csv` in `gr1-mining/` have results
-- Paper draft in `paper/` with FMCAD template, abstract, prelims, and evaluation sections
+- Paper draft in `paper/` with FMCAD template, abstract, prelims, algorithm section, and evaluation sections
+- Old eval scripts (samples2LTL comparisons) moved to `gr1-mining/old_eval/`
+
+### Slugs Integration Gotcha
+- slugs writes "RESULT: Specification is realizable/unrealizable." to **stderr**, not stdout. Always check `result.stderr`. This caused a bug where all mined specs appeared unrealizable.
+
+### Incremental Solving (branch: incremental-solving)
+- Refactored `GR1SATEncoding` to support incremental solving: `encodeAllComponents()` encodes once, `_addConsistencyConstraints()` via push/pop per template config
+- New `run_gr1_incremental_solver()` in `gr1_experiment.py` — 7-9× speedup over original enumeration on Spectra benchmarks (e.g., 22s → 2.9s on amba_ahb_fairness_1)
+- Bottleneck was Python-side Z3 expression re-encoding, not SAT solving itself
+
+### Symmetry Breaking (branch: symmetry-breaking)
+- Commutative child ordering, double negation elimination, component permutation breaking
+- No measurable speedup — confirmed the bottleneck was encoding, not SAT search
+
+### Trace Generation: Key Finding
+- A mix of SAT-generated traces + random traces (~25 each, ~50 total) is critical for a fair evaluation
+- With only random traces, samples2LTL finds trivial spurious separators (e.g., `F x8`) at D=2 in <1s
+- With mixed SAT+random traces, samples2LTL goes UNSAT from D=1 through D=6+ (each depth exponentially slower, D=5 takes ~55s, D=6 takes 800+s) while GR1Mine still solves at D=1 in <1s
+- This is because SAT-generated traces are assumption-satisfying — they force any separator to capture the reactive assume-guarantee structure, which a flat LTL formula needs depth 7+ to express
+- Removing U and -> from SAT baseline operators helps but doesn't change the fundamental scaling gap
+- The prior eval used only random traces, which made both approaches look comparable — this was misleading
+
+### Generalization Experiment
+- `experiments/generalization_experiment.py` — compares GR1Mine vs SAT on held-out traces
+- With 200 SAT-generated training traces, both achieve 89-99% accuracy on held-out — comparable
+- The differentiator is not generalization accuracy but structural output (GR(1) vs flat LTL)
+
+### Env/Sys Variable Partition (realizability constraint)
+- Without partition, GR1Mine mines valid trace separators but often unrealizable specs — system variables leak into assumption justice conditions, making synthesized controllers impossible
+- `GR1SATEncoding` now accepts optional `env_var_indices` parameter; when set, `_get_variables_for_component()` restricts leaf variables per component:
+  - `safety_e` primed vars: env only | `safety_s` primed vars: sys only | current vars: all on both sides
+  - Justice (J_i): env current vars only | Guarantees (G_i): sys current vars only
+  - `init_e`: env vars only | `init_s`: sys vars only
+- Threaded through `run_gr1_solver`, `run_gr1_enumerating_solver`, `run_gr1_incremental_solver`, and `eval_spectra.py`
+- Benchmark (`experiments/bench_partition.py`): 3/4 unpartitioned runs had sys vars in justice assumptions; all partitioned runs clean. Partitioned is often faster (smaller search space) except when the constraint forces a higher depth
+- Spectra parser already provides `metadata['env_vars']` / `metadata['sys_vars']` — no parser changes needed
+
+## External Benchmarks: Spectra Coverage
+- `spectra-specs/` has **662 .spectra files** across 10 subdirectories
+- We use only **bloemDebugging/** (30 files) and **cimattiAnalyzing/** (40 files) — 22 benchmarks pass parsing + max_vars=30 filter
+- These are all **boolean-only** specs with standard GR(1) syntax (AMBA bus arbiter + GenBuf protocol variants)
+- **Not parseable** by our boolean-only parser:
+  - SYNTECH15/17/19/20 (~552 files): enums, integers, defines, imports, PREV operator, typed variables (`Int(0..4)`, `{RED, GREEN, BLUE}`)
+  - forklift (29 files): `respondsTo` pattern macros
+  - CinderellaStepmother (9 files): `alw` keyword (alternative syntax for G)
+  - amba/ (2 files): parametric specs with integer counters
+- Extending the parser to handle enums/integers (by booleanizing them) would unlock SYNTECH families but is a significant effort
+
+### Evaluation: ATLAS Baseline (current)
+- **ATLAS** (Zhang et al., ICSE 2025): constrained LTL learner using Alloy/MaxSAT. Repo at `ATLAS/`, pre-built JAR at `ATLAS/bin/Atlas.jar`
+- Two ATLAS configurations as baselines:
+  - **ATLAS[LTL]**: unconstrained LTL mining (no template, no partition). Synthesis via ltlsynt.
+  - **ATLAS[GR1]**: GR(1) template + env/sys partition constraint expressed in Alloy. Synthesis via slugs.
+- ATLAS can express GR(1) + env/sys partition via Alloy constraints (`root in Imply`, `root.l in G`, subtree literal restrictions). However it still encodes full LTL temporal semantics internally, making it much slower.
+- Preliminary results on `gen_buf_wo_ass_fairness_5_genbuf` (24 vars): GR1Mine 17.6s (REALIZABLE), ATLAS[LTL] 11.0s (REALIZABLE, flat LTL), ATLAS[GR1] TIMEOUT at 300s. GR1Mine massively outperforms ATLAS when GR(1) constraints are imposed.
+- Main eval script: `experiments/eval_main.py` — runs all 22 Spectra benchmarks with GR1Mine, ATLAS[LTL], ATLAS[GR1], plus synthesis via slugs/ltlsynt.
+- Trace file conversion: `write_atlas_unconstrained()` and `write_atlas_gr1()` in eval_main.py generate ATLAS-format .trace files from our Trace objects.
+- ATLAS GR(1) output parsing: `atlas_gr1_to_slugs()` converts ATLAS prefix notation `"->(G(F(lhs)),G(F(rhs)))"` to slugs input format.
+- **ltlsynt requires lowercase variable names** — spot treats uppercase as LTL operators. All var names lowercased in `synthesize_ltlsynt()`.
+- Old evaluation scripts (samples2LTL[SAT], samples2LTL[DT] comparisons) archived in `gr1-mining/old_eval/`
 
 ## Next Steps to Consider
-- Integrate SAT-based trace generation into eval_spectra.py (moderate count ~30+20)
+- **Run full evaluation** (`experiments/eval_main.py`) — GR1Mine vs ATLAS[LTL] vs ATLAS[GR1] on all 22 Spectra benchmarks. Expect ~5 hours.
 - CEGIS loop: mine candidate, verify against ground truth, add distinguishing traces, re-mine
-- Biased negative trace generation (force assumptions to hold, then check guarantee failure)
-- Run full 3-way evaluation (GR1 vs SAT vs DT) on synthetic benchmarks with DT fix applied
 - Safety conjunct decomposition for large Spectra specs: mine G(φ₁) ∧ G(φ₂) as separate components
-- Investigate why GR1Mine is slower than baselines on Spectra (template enumeration overhead at D=1)
-- Paper: update evaluation section with corrected DT results, add Spectra benchmark table
+- Paper: write evaluation section with ATLAS comparison results
+- Paper: add complexity analysis section comparing encoding size with baseline
+- Investigate the 1 unrealizable GR1Mine result (specs_G5woef1): safety guarantee `G(!RtoB_ACK1)` constrains env var — tightening safety_s to sys-only current-state vars would fix but is more restrictive than standard GR(1)

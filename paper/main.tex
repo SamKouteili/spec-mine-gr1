@@ -1,14 +1,20 @@
 \documentclass[year=25]{fmcad}
 
 \usepackage{amsmath,amssymb,amsfonts}
-\usepackage{algorithmic}
-\usepackage{algorithm}
+\usepackage{amsthm}
+\newtheorem{definition}{Definition}
+\usepackage[ruled,linesnumbered,noend]{algorithm2e}
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{xspace}
 \usepackage{url}
+\usepackage{pifont}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
 
 % Macros
 \newcommand{\always}{\square}
@@ -32,33 +38,51 @@
 
 \begin{abstract}
 We present \toolname, a SAT-based tool for mining \GRone specifications
-from lasso-shaped traces. \GRone formulas---of the form
-$(\varphi_I^e \land \always \varphi_S^e \land \bigwedge_i \always\eventually J_i) \rightarrow
-(\varphi_I^s \land \always \varphi_S^s \land \bigwedge_j \always\eventually G_j)$---are
-the fragment of LTL for which reactive synthesis is polynomial, yet no
-prior tool mines them directly from traces.  Existing LTL miners search
-over both temporal and propositional operators, treating GR(1) as just
-another LTL formula.  We exploit the fixed temporal skeleton of \GRone:
-the temporal structure is given by the template, so only
-propositional sub-formulas need to be synthesised.  This eliminates the
-temporal operator semantics---the dominant cost in general LTL
-mining---and decomposes a single large SAT instance into several
-small, independent ones.
-On a benchmark suite of 20~\GRone specifications, \toolname solves
-all~20 while the general LTL miner times out on~4, with speedups
-ranging from $3.5\times$ to over $15{,}000\times$.
-Moreover, the \GRone template guarantees that every mined formula is
-directly usable for reactive synthesis, whereas the baseline frequently
-produces formulas outside any known realisability fragment.
+from lasso-shaped traces.
+\GRone formulas---of the form
+$(\varphi_I^e \land \always \varphi_S^e \land \bigwedge_i
+\always\eventually J_i) \rightarrow (\varphi_I^s \land \always
+\varphi_S^s \land \bigwedge_j \always\eventually G_j)$---are the
+fragment of LTL for which reactive synthesis is polynomial, yet no
+prior tool mines them directly from traces.
+Existing LTL miners search over both temporal and propositional
+operators, treating GR(1) as just another LTL formula.
+We exploit the fixed temporal skeleton of \GRone: the temporal
+structure is given by the template, so only propositional
+sub-formulas need to be synthesised.
+This eliminates the temporal operator semantics---the dominant cost
+in general LTL mining---and decomposes a single large SAT instance
+into several small, independent ones.
+An environment--system variable partition ensures that mined
+formulas respect the assume--guarantee boundary and are directly
+suitable for synthesis.
+On 60 boolean \GRone specifications from the
+Spectra project, covering AMBA bus arbiters, generalized buffers,
+and parameterised arbiters with 16--218 variables, \toolname solves
+58/60 benchmarks within a 10-minute timeout, scaling to
+218~variables.
+Compared to ATLAS, a state-of-the-art constrained LTL learner, in
+both unconstrained (ATLAS[LTL]) and \GRone-constrained
+(ATLAS[GR1]) configurations, \toolname solves 58/60 while
+ATLAS[LTL] solves 37/60 and ATLAS[GR1] only 25/60.
+Beyond 76~variables, neither ATLAS configuration finds any solution.
+Moreover, the \GRone template guarantees that every mined formula
+is directly usable for reactive synthesis, whereas ATLAS[LTL]
+produces predominantly trivial formulas.
 \end{abstract}
 
 \input{sections/1-intro}
 \input{sections/2-prelims}
 \input{sections/3-algo}
 \input{sections/4-eval}
+\input{sections/5-related}
 \input{sections/5-conclusion}
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
+
+\clearpage
+\appendix
+\input{sections/appendix}
 
 \end{document}

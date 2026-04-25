@@ -1,0 +1,79 @@
+\begin{algorithm}[t]
+\caption{\toolname}\label{alg:main}
+\scriptsize
+\DontPrintSemicolon
+\SetKwInOut{Input}{Input}
+\SetKwInOut{Output}{Output}
+\SetKwFunction{Push}{Push}
+\SetKwFunction{Pop}{Pop}
+\SetKwFunction{Sat}{Sat}
+\SetKwFunction{add}{add}
+\SetKwFunction{Reconstruct}{Reconstruct}
+\SetKwFunction{Encode}{EncodeAll}
+\SetKwProg{Proc}{Procedure}{}{}
+\Input{Traces $P$ (pos.), $N$ (neg.),
+  partition $(\mathit{AP}_\mathit{env}, \mathit{AP}_\mathit{sys})$,
+  bounds $M$, $K$}
+\Output{Smallest \GRone formula separating $P$ from $N$}
+\BlankLine
+\Proc{\Encode{$\mathcal{S}, \mathcal{C}, D$}}{
+  \ForEach{$c \in \mathcal{C}$}{
+    Init $x^c_{i,\lambda}$, $l^c_{i,j}$, $r^c_{i,j}$
+      $\forall\, i \!<\! D$,
+      $\lambda \!\in\! \{\land,\lor,\lnot\} \!\cup\! \mathit{Vars}(c)$\;
+    Init $y^c_{i,\sigma,t}$
+      $\forall\, \sigma \!\in\! P \!\cup\! N$, $t \!<\! |\sigma|$\;
+    Init $h^c_\sigma$
+      $\forall\, \sigma \!\in\! P \!\cup\! N$\;
+    $\mathcal{S}$.\add{one-hot labels, arity, acyclicity for
+      $x^c, l^c, r^c$}
+      \tcp*{Sec.~\ref{sec:component-dags}}
+    $\mathcal{S}$.\add{propositional semantics of $y^c$ via
+      $x^c, l^c, r^c$}
+      \tcp*{Sec.~\ref{sec:semantics}}
+    $\mathcal{S}$.\add{$h^c_\sigma$ via
+      Eqs.~\eqref{eq:init}--\eqref{eq:guarantee}}
+      \tcp*{Sec.~\ref{sec:temporal}}
+  }
+}
+\noindent\textbf{end procedure}\;
+\BlankLine
+$\mathcal{S} \gets \textsc{SatSolver}.\textsc{new}()$\;
+$\mathcal{C} \gets \{J_1,\ldots,J_M,\, G_1,\ldots,G_K,\,
+  \mathit{init}_\mathit{env},\, \mathit{init}_\mathit{sys},\,
+  \mathit{safe}_\mathit{env},\, \mathit{safe}_\mathit{sys}\}$\;
+\For{$D = 1, 2, 3, \ldots$}{
+  \Encode{$\mathcal{S}, \mathcal{C}, D$}
+    \tcp*{permanent constraints}
+  \For{$(m, k, F) \in
+    \{1,\!\ldots\!,M\} {\times} \{1,\!\ldots\!,K\} {\times}
+    2^{\{\mathit{init},\,\mathit{safe}\}}$}{
+    $\mathcal{A} \gets \{J_1,\!\ldots\!,J_m\}$;\;
+    $\mathcal{G} \gets \{G_1,\!\ldots\!,G_k\}$\;
+    \lIf{$\mathit{init} \in F$}{$\mathcal{A} \gets \mathcal{A}
+      \cup \{\mathit{init}_\mathit{env}\}$;\,
+      $\mathcal{G} \gets \mathcal{G}
+      \cup \{\mathit{init}_\mathit{sys}\}$}
+    \lIf{$\mathit{safe} \in F$}{$\mathcal{A} \gets \mathcal{A}
+      \cup \{\mathit{safe}_\mathit{env}\}$;\,
+      $\mathcal{G} \gets \mathcal{G}
+      \cup \{\mathit{safe}_\mathit{sys}\}$}
+    $\mathcal{S}$.\Push{}
+      \tcp*{ckpt: below is retractable}
+    \ForEach{$\sigma \in P$}{
+      $\mathcal{S}$.\add{$
+        \bigwedge_{a \in \mathcal{A}} h^a_\sigma \Rightarrow
+        \bigwedge_{g \in \mathcal{G}} h^g_\sigma$}\;
+    }
+    \ForEach{$\sigma \in N$}{
+      $\mathcal{S}$.\add{$
+        \bigwedge_{a \in \mathcal{A}} h^a_\sigma \land
+        \lnot(\bigwedge_{g \in \mathcal{G}} h^g_\sigma)$}\;
+    }
+    \lIf{$\mathcal{S}$.\Sat{}}{
+      \Return \Reconstruct{model, $\mathcal{A}, \mathcal{G}$}}
+    $\mathcal{S}$.\Pop{}
+      \tcp*{retract consistency constraints}
+  }
+}
+\end{algorithm}

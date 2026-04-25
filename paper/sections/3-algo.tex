@@ -1,3 +1,243 @@
 \section{Algorithm}\label{sec:algo}
 
-% TODO: Fill in algorithm description
+We now present \toolname, a SAT-based algorithm for mining \GRone
+specifications from lasso traces.
+The central observation is that the temporal structure of a \GRone
+formula is \emph{fixed}: every component sits inside a known temporal
+wrapper ($\always$, $\always\eventually$, or bare for initial
+conditions).
+Only the propositional content of each component---built from
+$\land$, $\lor$, $\lnot$, and atomic propositions---needs to be
+discovered.
+We explain the algorithm constructively, using a running example.
+
+\paragraph{Running example.}
+Suppose $\mathit{AP}_e = \{x_0, x_1\}$ and
+$\mathit{AP}_s = \{x_2, x_3\}$.
+We are given two positive and two negative lasso traces and wish
+to find the smallest \GRone formula separating them.
+
+\subsection{Overview}\label{sec:overview}
+
+Figure~\ref{fig:search} illustrates \toolname's search strategy.
+The algorithm performs a two-dimensional search: the outer loop
+increases the propositional formula depth $D$ (vertical axis),
+controlling how complex each component can be
+($D{=}1$: a single variable;
+$D{=}2$: one operator, e.g.\ $\lnot x_0$;
+$D{=}3$: trees, e.g.\ $x_0 \land x_1$);
+the inner loop enumerates template configurations $(m,k,F)$
+(horizontal axis), varying the number of justice and guarantee
+conditions.
+For each combination, \toolname encodes the mining problem as a SAT
+instance and checks satisfiability, returning the first solution
+found.
+
+\input{figures/search_figure}
+
+The \GRone template~\eqref{eq:gr1} is parameterised by the number
+of justice conditions $m$, guarantees $k$, and a subset
+$F \subseteq \{\mathit{init}, \mathit{safe}\}$ indicating which
+optional component types to include: $\mathit{init} \in F$ means
+the template includes initial-condition components
+($\mathit{init}_\mathit{env}$ on the assumption side,
+$\mathit{init}_\mathit{sys}$ on the guarantee side), and
+$\mathit{safe} \in F$ means safety components are included.
+Since the correct template is unknown, \toolname searches over
+configurations $(m, k, F)
+\in \{1,\ldots,M\} \times \{1,\ldots,K\} \times
+2^{\{\mathit{init},\,\mathit{safe}\}}$
+in non-decreasing order of total component count
+$m + k + 2|F|$,
+trying simpler templates first.
+
+We pre-allocate a set of \emph{component identifiers}
+$\mathcal{C} = \{J_1,\ldots,J_M,\; G_1,\ldots,G_K,\;
+\mathit{init}_\mathit{env},\; \mathit{init}_\mathit{sys},\;
+\mathit{safe}_\mathit{env},\; \mathit{safe}_\mathit{sys}\}$,
+one for each slot in the maximal template.
+Each $c \in \mathcal{C}$ names an \emph{unknown} propositional
+formula to be determined by the SAT solver---for instance,
+$\mathit{init}_\mathit{env}$ names the environment initial condition
+whose content $\varphi_I^e$ is unknown.
+The SAT variables $x^c, l^c, r^c$ encode the syntax DAG for~$c$
+(Section~\ref{sec:component-dags}),
+$y^c$ evaluates it on traces
+(Section~\ref{sec:semantics}),
+and $h^c$ captures whether it holds under its temporal wrapper
+(Section~\ref{sec:temporal}).
+The \textsc{EncodeAll} subroutine in
+Algorithm~\ref{alg:main} bundles these steps for all
+components at a given depth.
+
+The key observation enabling incremental solving is that all
+of these constraints are \emph{independent} of the template
+configuration---only the consistency
+constraints~(\eqref{eq:pos}--\eqref{eq:neg}) change.
+For each depth $D$, we encode all $c \in \mathcal{C}$ once,
+then iterate over template configurations.
+Each configuration partitions the active components into
+assumption-side ($J_i$, $\mathit{init}_\mathit{env}$, $\mathit{safe}_\mathit{env}$) and
+guarantee-side ($G_j$, $\mathit{init}_\mathit{sys}$, $\mathit{safe}_\mathit{sys}$),
+asserts the consistency constraints~\eqref{eq:pos}--\eqref{eq:neg}
+inside a \textsc{Push}/\textsc{Pop} scope, and queries the solver.
+\textsc{Push} saves a checkpoint on the solver's
+constraint stack; \textsc{Pop} retracts all constraints added since
+the checkpoint, restoring the solver to its prior state.
+Learned clauses persist across checkpoints, so information
+gained from one UNSAT configuration prunes subsequent
+configurations at the same depth.
+
+\paragraph{Example.}
+At $D = 1$, the solver calls
+\textsc{EncodeAll} for $\mathcal{C}$,
+creating the SAT variables and constraints on all four traces.
+It then tries template $(m{=}1, k{=}1, F{=}\emptyset)$:
+\textsc{Push}, assert consistency for $\always\eventually J_1 \to
+\always\eventually G_1$, call \textsc{Sat}.
+If UNSAT, \textsc{Pop} and try $(1, 2, \emptyset)$:
+$\always\eventually J_1 \to \always\eventually G_1 \land
+\always\eventually G_2$.
+If still UNSAT, continue through all configurations at $D = 1$,
+then increment to $D = 2$, encode larger DAGs (allowing
+$\lnot$, $\land$, $\lor$), and repeat.
+Algorithm~\ref{alg:main} gives the complete procedure;
+the remaining subsections detail the four families of constraints
+added by \textsc{EncodeAll}: DAG structure
+(Section~\ref{sec:component-dags}), propositional semantics
+(Section~\ref{sec:semantics}), temporal holds
+(Section~\ref{sec:temporal}), and trace consistency
+(Section~\ref{sec:consistency}).
+
+\input{figures/algorithm}
+
+\subsection{Component DAGs}\label{sec:component-dags}
+
+Each component $c$ of the \GRone template is an unknown
+propositional formula.
+We represent it as a syntax DAG of $D$ nodes
+$0, 1, \ldots, D{-}1$, where node~$D{-}1$ is the root and
+node~0 is always a leaf (atomic proposition).
+The DAG is described by three families of SAT variables:
+\begin{itemize}
+\item $x^c_{i,\lambda}$: ``node $i$ is labelled $\lambda$,'' where
+      $\lambda \in \{\land, \lor, \lnot\} \cup \mathit{Vars}(c)$
+      and $\mathit{Vars}(c)$ is the set of variables permitted in
+      component $c$ by the environment--system partition
+      (Section~\ref{sec:gr1}).
+\item $l^c_{i,j}$, $r^c_{i,j}$: ``the left (right) child of
+      node $i$ is node $j$,'' for
+      $1 \le i < D$, $0 \le j < i$.
+\item $y^c_{i,\sigma,t}$: ``node $i$
+      evaluates to true at position $t$ of trace~$\sigma$.''
+\end{itemize}
+Standard constraints enforce exactly one label per node,
+correct arity ($\land$/$\lor$: two children; $\lnot$: one;
+leaves: none), and acyclicity ($j < i$).
+
+\paragraph{Example at $D = 1$.}
+At depth $D = 1$, each component is a single leaf node---just an
+atomic proposition.
+For a justice component $J_1$, the partition restricts the leaf to
+environment variables, so the SAT solver chooses among
+$x^{J_1}_{0,x_0}$ and $x^{J_1}_{0,x_1}$ (exactly one must be true).
+For a guarantee component $G_1$, only system variables are
+permitted: $x^{G_1}_{0,x_2}$ or $x^{G_1}_{0,x_3}$.
+
+\subsection{Propositional Semantics}\label{sec:semantics}
+
+The $y$ variables link each DAG to the traces.
+For a leaf labelled $x_p$:
+$y^c_{i,\sigma,t} \Leftrightarrow \sigma[t][p]$.
+For primed leaves $x_p'$ in safety components:
+$y^c_{i,\sigma,t} \Leftrightarrow \sigma[\mathit{next}(t)][p]$.
+For internal nodes, the semantics follow the operator:
+\begin{align*}
+x^c_{i,\land} \land l^c_{i,a} \land r^c_{i,b} &\;\Rightarrow\;
+  \bigl(y^c_{i,\sigma,t} \Leftrightarrow
+  y^c_{a,\sigma,t} \land y^c_{b,\sigma,t}\bigr) \\
+x^c_{i,\lor} \land l^c_{i,a} \land r^c_{i,b} &\;\Rightarrow\;
+  \bigl(y^c_{i,\sigma,t} \Leftrightarrow
+  y^c_{a,\sigma,t} \lor y^c_{b,\sigma,t}\bigr) \\
+x^c_{i,\lnot} \land l^c_{i,a} &\;\Rightarrow\;
+  \bigl(y^c_{i,\sigma,t} \Leftrightarrow
+  \lnot\, y^c_{a,\sigma,t}\bigr)
+\end{align*}
+These are asserted for every trace $\sigma$ and position $t$.
+
+\paragraph{Example.}
+Suppose the solver assigns $x^{J_1}_{0,x_0} = \mathit{true}$
+(i.e., $J_1$ is the proposition $x_0$).
+Then for each trace $\sigma$ and position $t$,
+$y^{J_1}_{0,\sigma,t}$ is forced to equal $\sigma[t][0]$---the
+value of $x_0$ at that position.
+No search over temporal operators occurs; the $y$ variables are
+purely propositional.
+
+\subsection{Temporal Holds}\label{sec:temporal}
+
+Rather than searching over temporal operators, we \emph{hardcode}
+the temporal semantics of each component's wrapper.
+A single Boolean variable $h^c_\sigma$ captures whether component
+$c$ holds on trace~$\sigma$, defined in terms of the root node's
+$y$ values.
+For a trace $\sigma$ of length $L$ with lasso start $\ell$:
+\begin{align}
+  h^{\mathit{init}}_\sigma &\;\Leftrightarrow\;
+    y^{\mathit{init}}_{D-1,\,\sigma,\,0}
+    \label{eq:init}\\[2pt]
+  h^{\mathit{safety}}_\sigma &\;\Leftrightarrow\;
+    \textstyle\bigwedge_{t=0}^{L-1}
+    y^{\mathit{safety}}_{D-1,\,\sigma,\,t}
+    \label{eq:safety}\\[2pt]
+  h^{J_i}_\sigma &\;\Leftrightarrow\;
+    \textstyle\bigvee_{t \in \mathit{loop}(\sigma)}
+    y^{J_i}_{D-1,\,\sigma,\,t}
+    \label{eq:justice}\\[2pt]
+  h^{G_j}_\sigma &\;\Leftrightarrow\;
+    \textstyle\bigvee_{t \in \mathit{loop}(\sigma)}
+    y^{G_j}_{D-1,\,\sigma,\,t}
+    \label{eq:guarantee}
+\end{align}
+
+\paragraph{Example.}
+Continuing with $J_1 = x_0$ and a trace $\sigma$ whose loop
+positions are $\{2, 3\}$: $h^{J_1}_\sigma$ is true iff
+$\sigma[2][0] \lor \sigma[3][0]$---i.e., $x_0$ is true at some
+loop position.
+This directly encodes $\always\eventually(x_0)$ without ever
+introducing $\always$ or $\eventually$ as SAT-searchable
+operators.
+
+\subsection{Consistency Constraints}\label{sec:consistency}
+
+The consistency constraints tie all components together by enforcing
+the assume--guarantee semantics of \GRone on the given traces.
+Let $\mathcal{A}$ and $\mathcal{G}$ be the sets of active assumption
+and guarantee components for a template configuration.
+For each positive trace $\sigma \in P$:
+\begin{equation}\label{eq:pos}
+  \textstyle\bigwedge_{a \in \mathcal{A}} h^a_\sigma
+  \;\Rightarrow\;
+  \textstyle\bigwedge_{g \in \mathcal{G}} h^g_\sigma
+\end{equation}
+For each negative trace $\sigma \in N$:
+\begin{equation}\label{eq:neg}
+  \textstyle\bigwedge_{a \in \mathcal{A}} h^a_\sigma
+  \;\;\land\;\;
+  \lnot\bigl(\textstyle\bigwedge_{g \in \mathcal{G}} h^g_\sigma\bigr)
+\end{equation}
+
+\paragraph{Example.}
+For the template $\always\eventually J_1 \to \always\eventually G_1$
+with $\mathcal{A} = \{J_1\}$ and $\mathcal{G} = \{G_1\}$:
+each positive trace requires
+$h^{J_1}_{\sigma^+} \Rightarrow h^{G_1}_{\sigma^+}$
+(if the assumption holds, the guarantee must hold), and
+each negative trace requires
+$h^{J_1}_{\sigma^-} \land \lnot h^{G_1}_{\sigma^-}$
+(the assumption holds \emph{and} the guarantee fails).
+If the SAT solver finds a satisfying assignment, we read off
+$x^{J_1}_{0,x_0} = \mathit{true}$ and
+$x^{G_1}_{0,x_2} = \mathit{true}$, yielding the formula
+$\always\eventually(x_0) \to \always\eventually(x_2)$.

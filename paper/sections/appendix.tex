@@ -1,0 +1,49 @@
+\section{ATLAS[GR1] Alloy Constraint}\label{app:alloy}
+
+Figure~\ref{fig:alloy} shows the Alloy constraint appended to
+ATLAS trace files to encode the \GRone template and
+environment--system variable partition.
+The constraint restricts the root node to an implication
+(\texttt{Imply}) whose left and right children are
+$\always\eventually$ subformulas (encoded as \texttt{G} $\to$
+\texttt{F} chains), with literal restrictions ensuring that
+assumption literals draw from environment variables and guarantee
+literals from system variables.
+
+\begin{figure}[h]
+\begin{small}
+\begin{verbatim}
+fact {
+  root in Imply
+  root.l in G
+  root.l.l in F
+  root.r in G
+  root.r.l in F
+  all n: root.l.l.l.*(l+r) |
+    n in And + Or + Neg + Literal
+  all n: root.r.l.l.*(l+r) |
+    n in And + Or + Neg + Literal
+  all n: root.l.l.l.*(l+r) & Literal |
+    n in <env_literals>
+  all n: root.r.l.l.*(l+r) & Literal |
+    n in <sys_literals>
+}
+\end{verbatim}
+\end{small}
+\caption{Alloy constraint for ATLAS[GR1].
+\texttt{<env\_literals>} and \texttt{<sys\_literals>} are
+replaced with the benchmark's environment and system variable
+names (e.g., \texttt{x0~+~x1~+~\ldots~+~x4} for 5~environment
+variables).}\label{fig:alloy}
+\end{figure}
+
+\section{Detailed Evaluation Results}\label{app:detailed}
+
+Table~\ref{tab:detailed} presents per-benchmark results for all
+60~Spectra benchmarks, including the mined \toolname formula.
+For each tool, we report the mining time (seconds),
+realizability, and controller size---BDD nodes for
+\toolname and ATLAS[GR1], Mealy states for ATLAS[LTL].
+Timeouts are marked TO (10\,min).
+
+\input{sections/appendix_table}

@@ -1,0 +1,13 @@
+.DS_Store
+*.pyc
+__pycache__/
+.venv/
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz
+slugs/
+ATLAS/
+samples2LTL/

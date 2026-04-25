@@ -1,3 +1,103 @@
 \section{Introduction}\label{sec:intro}
 
-% TODO: Fill in introduction
+Generalized Reactivity of Rank~1 (\GRone) is a fragment of linear
+temporal logic (LTL) that naturally captures a broad class of
+reactive systems in which a system must maintain ongoing obligations
+provided the environment satisfies its own fairness
+conditions~\cite{PitermanPS06}.
+Several real-world systems, from hardware bus
+protocols~\cite{BloemGJPPW07} to robotic motion
+planning~\cite{KressGazitFP09} and autonomous
+controllers~\cite{MaozR21}, are expressed as \GRone specifications.
+\GRone is particularly attractive because of its tractability for
+reactive synthesis: while synthesis from general LTL specifications
+is doubly exponential in the length of the
+formula~\cite{PnueliR89}, \GRone synthesis is polynomial in the
+size of the state space~\cite{PitermanPS06}.
+Tools such as Slugs~\cite{EhlersR16} and Spectra~\cite{MaozR21}
+efficiently synthesize correct-by-construction controllers from
+\GRone specifications.
+The AMBA AHB bus arbiter, a widely cited example of synthesis
+applied to an industrial hardware protocol, was specified and
+synthesized as a \GRone problem~\cite{BloemGJPPW07}.
+
+However, writing correct \GRone specifications remains a manual and
+error-prone process.
+Moreover, in many practical settings, a formal model may not be
+available.
+Consider a blackbox hardware controller or a legacy robotic system
+for which only execution traces are available.
+If we can obtain positive traces, representing correct system
+behaviour, and negative traces, representing undesirable behaviour
+(for instance, from test logs with known-good and known-bad
+executions, or from traces flagged by runtime monitors), we can
+mine a \GRone specification consistent with the observed behaviour.
+Such a mined specification not only reveals the underlying safety
+and liveness structure of the system, but can be fed directly into
+existing \GRone synthesis tools to produce a correct-by-construction
+controller.
+This enables a pipeline from observed behaviour to formally verified
+implementation, with an explicit model of the system.
+
+Existing specification mining
+tools~\cite{NeiderG18,LemieuxDB15,RahaRFV22} learn general LTL
+formulas from positive and negative example traces.
+However, these tools mine monolithic LTL formulas without any
+distinction between environment assumptions and system guarantees.
+Without this decomposition, any subsequent synthesis step must treat
+all inputs as adversarial, frequently rendering the mined
+specification unrealisable even when a realisable \GRone formulation
+of the same behaviour exists.
+Recently, ATLAS~\cite{ZhangCGD25} generalises LTL learning by
+allowing users to specify structural constraints on the formula to
+be learned, reducing the problem to MaxSAT via an encoding in
+first-order relational logic.
+One can encode the syntactic shape of a \GRone specification as an
+ATLAS constraint; however, this approach treats \GRone structure as a
+filter on a general LTL search space rather than exploiting it
+algorithmically.
+The underlying MaxSAT encoding retains the full generality of LTL
+semantics over lasso traces, and scalability prohibitively degrades
+as formula size and the number of traces grow.
+
+In this paper, we present \toolname, a SAT-based algorithm that
+mines \GRone specifications directly from lasso-shaped traces.
+\toolname fixes the temporal skeleton of the \GRone template---the
+$\always$, $\always\eventually$, and initial-condition wrappers are
+given---and encodes only the unknown propositional content of each
+component as an independent syntax DAG in a single SAT instance,
+with hardcoded temporal semantics linking DAG evaluations to lasso
+positions and consistency constraints enforcing the
+assume--guarantee classification of traces.
+An environment--system variable partition restricts which
+propositions may appear in each component, ensuring that every
+mined formula respects the assume--guarantee boundary and is
+directly suitable for synthesis.
+\toolname further exploits the structure of the search space via
+incremental SAT solving: component DAG constraints are encoded
+once and shared across template configurations using push/pop,
+so that only lightweight consistency constraints are added and
+retracted as the algorithm enumerates over the number of justice
+and guarantee conditions.
+
+We evaluate \toolname on 60 boolean \GRone specifications from the
+Spectra benchmark suite~\cite{MaozR21}, covering AMBA bus arbiters,
+generalized buffers, and parameterised arbiters with 16--218
+variables.
+Compared to ATLAS in both unconstrained (ATLAS[LTL]) and
+\GRone-constrained (ATLAS[GR1]) configurations, \toolname solves
+all benchmarks up to 34~variables within a 10-minute timeout, while
+ATLAS[GR1] solves only 8/22 and ATLAS[LTL] 13/22 on the
+$\leq$28-variable subset.
+The formulas mined by ATLAS[LTL] are predominantly trivial
+($\eventually x_i$, tautologies), yielding 1-state controllers;
+\toolname produces structured \GRone specifications whose
+synthesised controllers require 6--73~BDD nodes.
+
+Section~\ref{sec:prelims} reviews \GRone and lasso traces.
+Section~\ref{sec:algo} presents the SAT encoding, template
+enumeration, and incremental solving.
+Section~\ref{sec:eval} evaluates \toolname against ATLAS on the
+Spectra benchmarks.
+Section~\ref{sec:related} discusses related work, and
+Section~\ref{sec:conclusion} concludes.

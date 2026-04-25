@@ -1,0 +1,92 @@
+\begin{table*}[p]
+\centering
+\caption{Per-benchmark evaluation results with mined \toolname formulas.
+$|V|$: total variables.
+Time: mining time in seconds.
+R: realizability (\cmark\ = realizable, \xmark\ = unrealizable,
+-- = not mined).
+$|C|$: controller size (BDD nodes or Mealy states).}\label{tab:detailed}
+\vspace{4pt}
+\setlength{\tabcolsep}{2pt}
+\tiny
+\begin{tabular}{@{}l r | r c r | r c r | r c r | l @{}}
+\toprule
+& &
+  \multicolumn{3}{c|}{\toolname} &
+  \multicolumn{3}{c|}{ATLAS[LTL]} &
+  \multicolumn{3}{c|}{ATLAS[GR1]} & \\
+Benchmark & $|V|$ &
+  Time & R & $|C|$ &
+  Time & R & $|C|$ &
+  Time & R & $|C|$ & \toolname Formula \\
+\midrule
+\multicolumn{12}{@{}l}{\emph{AMBA AHB bus arbiter (16--40 vars)}} \\[1pt]
+\texttt{amba\_fair\_1} & 16 & 138 & \cmark & -- & TO & -- & -- & TO & -- & -- & $((\lnot x0) \lor (\lnot x0) \land \always\eventually (x2 \lor x0)) \to (x9 \lor x7 \land \always\eventually ((\lnot x7) \land (\lnot x7)) \land \always\eventually (x9 \land x10) \land \always\eventually (x11 \land x6))$ \\
+\texttt{amba\_trans\_1} & 16 & 163 & \cmark & -- & TO & -- & -- & TO & -- & -- & $(\always ((\lnot \Next(x2)) \lor \Next(x1)) \land \always\eventually ((x3 \lor x0) \lor (x3 \lor x0))) \to (\always ((\lnot x14) \lor ((\lnot x14) \land x14)) \land \always\eventually (x10 \land (\lnot x11)))$ \\
+\texttt{amba\_woaf\_1} & 16 & 222 & \cmark & 14 & TO & -- & -- & TO & -- & -- & $(\lnot (x3 \lor x4) \land \always\eventually ((x3 \lor x0) \lor x3)) \to (x8 \land (\lnot x14) \land \always\eventually (x7 \land (x7 \land x10)))$ \\
+\texttt{amba\_fair\_2} & 22 & 139 & \cmark & -- & TO & -- & -- & TO & -- & -- & $(\always ((\lnot x4) \lor x3) \land \always\eventually (x1 \lor (\lnot x3))) \to (\always (\Next(x17) \lor (\lnot x20)) \land \always\eventually ((\lnot x19) \land x10))$ \\
+\texttt{amba\_trans\_2} & 22 & 360 & \cmark & -- & TO & -- & -- & TO & -- & -- & $(\always (x1 \lor (\lnot x2)) \land \always\eventually ((\lnot x4) \lor x6)) \to (\always (\Next(x11) \lor (\lnot \Next(x20))) \land \always\eventually ((\lnot x19) \land x12))$ \\
+\texttt{amba\_woaf\_2} & 22 & 62 & \cmark & -- & TO & -- & -- & TO & -- & -- & $(\lnot x4 \land \always\eventually (x3 \lor x3)) \to (x9 \lor x9 \land \always\eventually (\lnot x11) \land \always\eventually (\lnot x18) \land \always\eventually (\lnot x19) \land \always\eventually (\lnot x14))$ \\
+\texttt{amba\_fair\_3} & 28 & 32 & \cmark & 11 & 12 & \cmark & 1 & 97 & \cmark & 14 & $(\always (\lnot x4) \land \always\eventually (x0 \land x0)) \to (\always (\lnot \Next(x9)) \land \always\eventually (x14 \lor x14))$ \\
+\texttt{amba\_trans\_3} & 28 & 33 & \cmark & 8 & TO & -- & -- & TO & -- & -- & $(\lnot x6 \land \always\eventually (\lnot x4)) \to (x13 \lor x13 \land \always\eventually (\lnot x20))$ \\
+\texttt{amba\_woaf\_3} & 28 & 24 & \cmark & 8 & 13 & \cmark & 1 & TO & -- & -- & $(\lnot x6 \land \always\eventually (\lnot x7)) \to (x15 \lor x15 \land \always\eventually (\lnot x24))$ \\
+\texttt{amba\_fair\_4} & 34 & 0.2 & \cmark & 8 & 17 & \cmark & 1 & 32 & \cmark & 8 & $(\always\eventually (x0)) \to (\always\eventually (x24))$ \\
+\texttt{amba\_trans\_4} & 34 & 37 & \cmark & 11 & 18 & \cmark & 1 & 160 & \cmark & 23 & $(\always (\lnot x6) \land \always\eventually (\lnot x7)) \to (\always (\lnot \Next(x25)) \land \always\eventually (\lnot x30))$ \\
+\texttt{amba\_woaf\_4} & 34 & 26 & \cmark & 11 & 24 & \xmark & -- & TO & -- & -- & $(\always (\lnot x6) \land \always\eventually (\lnot x5)) \to (\always (\Next(x17) \lor \Next(x17)) \land \always\eventually (x33 \lor x33))$ \\
+\texttt{amba\_fair\_5} & 40 & 0.2 & \cmark & 8 & 32 & \cmark & 1 & 53 & \cmark & 8 & $(\always\eventually (x0)) \to (\always\eventually (x19))$ \\
+\texttt{amba\_trans\_5} & 40 & 38 & \cmark & 22 & 30 & \cmark & 1 & 344 & \cmark & 13 & $(\always\eventually (\lnot x0)) \to (\always\eventually (x38 \lor x38) \land \always\eventually (x18 \land x18))$ \\
+\texttt{amba\_woaf\_5} & 40 & 24 & \cmark & 8 & 44 & \cmark & 1 & 51 & \cmark & 8 & $(\always\eventually (\lnot x3)) \to (\always\eventually (x39 \land x39))$ \\
+[2pt]
+\midrule
+\multicolumn{12}{@{}l}{\emph{Parameterised arbiter (22--218 vars)}} \\[1pt]
+\texttt{A2woef1} & 22 & 36 & \cmark & 65 & TO & -- & -- & TO & -- & -- & $(\lnot x0 \land \always\eventually (\lnot x4)) \to (x10 \land x10 \land \always\eventually (x9 \lor x9) \land \always\eventually (\lnot x11) \land \always\eventually (\lnot x18))$ \\
+\texttt{A2wsf1} & 22 & 140 & \cmark & -- & TO & -- & -- & TO & -- & -- & $(\lnot (x3 \lor x3) \land \always\eventually (x0 \land (x0 \lor x0))) \to (x16 \lor x9 \land \always\eventually (x8 \land x21) \land \always\eventually ((x14 \land x14) \land x14) \land \always\eventually ((\lnot x21) \lor (\lnot x21)))$ \\
+\texttt{A2wsf2} & 22 & 601 & \cmark & -- & TO & -- & -- & TO & -- & -- & $(\always (x3 \lor (\lnot x4)) \land \always\eventually ((\lnot x2) \lor ((\lnot x2) \land x2))) \to (\always (\lnot (\Next(x18) \lor x18)) \land \always\eventually ((x21 \lor x21) \lor ((x21 \lor x21) \land (x21 \lor x21))))$ \\
+\texttt{A2wst1} & 22 & 418 & \cmark & -- & TO & -- & -- & TO & -- & -- & $(\always ((\lnot x4) \lor x3) \land \always\eventually (x2 \lor (\lnot x3))) \to (\always ((\lnot x20) \lor x13) \land \always\eventually (x21 \land (\lnot x11))$ \\
+\texttt{A2wst2} & 22 & 361 & \cmark & -- & TO & -- & -- & TO & -- & -- & $(\always (x3 \lor (\lnot x4)) \land \always\eventually ((x0 \lor (x0 \land x0)) \lor x0)) \to (\always ((\lnot x18) \lor \Next(x14)) \land \always\eventually (x10 \land (\lnot x14)))$ \\
+\texttt{G5woef1} & 24 & 18 & \cmark & 11 & 8 & \cmark & 1 & TO & -- & -- & $(\always (\lnot x7) \land \always\eventually (x8 \lor x8)) \to (\always (\Next(x16) \lor \Next(x16)) \land \always\eventually (\lnot x22))$ \\
+\texttt{G5wsf1} & 24 & 2 & \cmark & 7 & 8 & \cmark & 1 & TO & -- & -- & $(\always (\Next(x8)) \land \always\eventually (x8)) \to (\always (\Next(x23)) \land \always\eventually (x23))$ \\
+\texttt{G5wsf2} & 24 & 24 & \cmark & 12 & 5 & \cmark & 1 & 11 & \cmark & 11 & $(\always\eventually (\lnot x0) \land \always\eventually (x6 \lor x6)) \to (\always\eventually (x22 \lor x22))$ \\
+\texttt{G5wst1} & 24 & 22 & \cmark & 12 & 5 & \cmark & 1 & 10 & \cmark & 11 & $(\always\eventually (\lnot x1) \land \always\eventually (\lnot x6)) \to (\always\eventually (x17 \lor x17))$ \\
+\texttt{G5wst2} & 24 & 2 & \cmark & 12 & 8 & \cmark & 1 & 116 & \cmark & 9 & $(\always (\Next(x8)) \land \always\eventually (x5)) \to (\always (x23) \land \always\eventually (x18))$ \\
+\texttt{A4woef1} & 34 & 23 & \cmark & 27 & 20 & \cmark & 1 & 209 & \cmark & 23 & $(\always\eventually (\lnot x10) \land \always\eventually (x1 \land x1)) \to (\always\eventually (x14 \lor x14) \land \always\eventually (x16 \land x16))$ \\
+\texttt{A4wsf1} & 34 & 0.2 & \cmark & 8 & 17 & \cmark & 1 & 31 & \cmark & 8 & $(\always\eventually (x0)) \to (\always\eventually (x15))$ \\
+\texttt{A4wsf2} & 34 & 37 & \cmark & 15 & 22 & \cmark & 1 & 200 & \cmark & 9 & $(\always (\lnot x6) \land \always\eventually (\lnot x2)) \to (\always (\lnot x20) \land \always\eventually (x33 \lor x33))$ \\
+\texttt{A4wst1} & 34 & 1 & \cmark & 26 & 19 & \cmark & 1 & 146 & \cmark & 14 & $(\always\eventually (x3) \land \always\eventually (x7)) \to (\always\eventually (x14) \land \always\eventually (x32))$ \\
+\texttt{A4wst2} & 34 & 31 & \cmark & 8 & 17 & \cmark & 1 & 28 & \cmark & 8 & $(\always\eventually (\lnot x0)) \to (\always\eventually (x19 \lor x19))$ \\
+\texttt{A5woef1} & 40 & 28 & \cmark & 12 & 28 & \cmark & 1 & 49 & \cmark & 11 & $(\always (\lnot x37) \land \always\eventually (x9 \land x9)) \to (\always (\lnot x5) \land \always\eventually (x37 \lor x37))$ \\
+\texttt{A5wsf1} & 40 & 38 & \cmark & 8 & 30 & \cmark & 1 & 50 & \cmark & 8 & $(\always\eventually (\lnot x12)) \to (\always\eventually (x17 \lor x17))$ \\
+\texttt{A5wsf2} & 40 & 44 & \xmark & -- & 42 & \xmark & -- & 57 & \cmark & 11 & $(\always (\lnot \Next(x4)) \land \always\eventually (\lnot x2)) \to (\always (\lnot x12) \land \always\eventually (x37 \lor x37))$ \\
+\texttt{A5wst1} & 40 & 0.8 & \cmark & 13 & 31 & \cmark & 1 & 53 & \cmark & 8 & $(\always\eventually (x9) \land \always\eventually (x1)) \to (\always\eventually (x39))$ \\
+\texttt{A5wst2} & 40 & 0.2 & \cmark & 8 & 33 & \cmark & 1 & 55 & \cmark & 8 & $(\always\eventually (x0)) \to (\always\eventually (x18))$ \\
+\texttt{G20woef1} & 56 & 38 & \cmark & 10 & 119 & \cmark & 1 & TO & -- & -- & $(\always (\lnot \Next(x19)) \land \always\eventually (\lnot x11)) \to (\always (\Next(x47) \lor \Next(x47)) \land \always\eventually (\lnot x52))$ \\
+\texttt{G20wsf1} & 56 & 52 & \cmark & 12 & 109 & \xmark & -- & TO & -- & -- & $(\always\eventually (\lnot x7) \land \always\eventually (\lnot x20)) \to (\always\eventually (x50 \land x50))$ \\
+\texttt{G20wsf2} & 56 & 51 & \cmark & 8 & 96 & \cmark & 1 & 176 & \cmark & 8 & $(\always\eventually (\lnot x0)) \to (\always\eventually (x55 \lor x55))$ \\
+\texttt{G20wst1} & 56 & 52 & \cmark & 8 & 111 & \cmark & 1 & 184 & \cmark & 8 & $(\always\eventually (\lnot x12)) \to (\always\eventually (x46 \lor x46))$ \\
+\texttt{G20wst2} & 56 & 59 & \cmark & 12 & TO & -- & -- & TO & -- & -- & $(\always (\lnot \Next(x6)) \land \always\eventually (x23 \lor x23)) \to (\always (x47 \land x47) \land \always\eventually (x46 \lor x46))$ \\
+\texttt{G100woef1} & 218 & 50 & \cmark & 12 & TO & -- & -- & TO & -- & -- & $(x103 \land \always (\Next(x103)) \land \always\eventually (x101)) \to (x163 \land \always (x103) \land \always\eventually (x150))$ \\
+\texttt{G100wsf1} & 218 & 0.9 & \cmark & 8 & TO & -- & -- & TO & -- & -- & $(\always\eventually (x61)) \to (\always\eventually (x217))$ \\
+\texttt{G100wsf2} & 218 & 183 & \cmark & 8 & TO & -- & -- & TO & -- & -- & $(\always\eventually (\lnot x34)) \to (\always\eventually (x206 \land x206))$ \\
+\texttt{G100wst1} & 218 & 0.9 & \cmark & 8 & TO & -- & -- & TO & -- & -- & $(\always\eventually (x100)) \to (\always\eventually (x107))$ \\
+\texttt{G100wst2} & 218 & 196 & \cmark & 27 & TO & -- & -- & TO & -- & -- & $(\always\eventually (\lnot x63) \land \always\eventually (\lnot x12)) \to (\always\eventually (\lnot x209) \land \always\eventually (x206 \lor x206))$ \\
+[2pt]
+\midrule
+\multicolumn{12}{@{}l}{\emph{Generalized buffer (24--97 vars)}} \\[1pt]
+\texttt{gb\_fair\_5} & 24 & 2 & \cmark & 11 & 11 & \xmark & -- & 118 & \cmark & 9 & $(\always (x8) \land \always\eventually (x2)) \to (\always (\Next(x19)) \land \always\eventually (x18))$ \\
+\texttt{gb\_trans\_5} & 24 & 2 & \cmark & 9 & 5 & \xmark & -- & 10 & \cmark & 11 & $(\always (x8) \land \always\eventually (x8)) \to (\always (x8) \land \always\eventually (x23))$ \\
+\texttt{gb\_woaf\_5} & 24 & 18 & \cmark & 11 & 6 & \cmark & 1 & TO & -- & -- & $(\always (\lnot x7) \land \always\eventually (x4 \lor x4)) \to (\always (\Next(x10) \land \Next(x10)) \land \always\eventually (x13 \lor x13))$ \\
+\texttt{gb\_fair\_10} & 35 & 39 & \cmark & 11 & 91 & \xmark & -- & TO & -- & -- & $(\always (\lnot x11) \land \always\eventually (\lnot x8)) \to (\always (\lnot \Next(x24)) \land \always\eventually (\lnot x25))$ \\
+\texttt{gb\_trans\_10} & 35 & 33 & \cmark & 8 & 20 & \cmark & 1 & 61 & \cmark & 8 & $(\always\eventually (\lnot x11)) \to (\always\eventually (x26 \lor x26))$ \\
+\texttt{gb\_woaf\_10} & 35 & 2 & \cmark & 8 & 51 & \cmark & 1 & 92 & \cmark & 9 & $(x13 \land \always\eventually (x11)) \to (x23 \land \always\eventually (x34))$ \\
+\texttt{gb\_fair\_20} & 56 & TO & -- & -- & 105 & \xmark & -- & TO & -- & -- & -- \\
+\texttt{gb\_trans\_20} & 56 & 49 & \cmark & 8 & 93 & \cmark & 1 & TO & -- & -- & $(\always\eventually (\lnot x1)) \to (\always\eventually (x50 \lor x50))$ \\
+\texttt{gb\_woaf\_20} & 56 & TO & -- & -- & TO & -- & -- & TO & -- & -- & -- \\
+\texttt{gb\_fair\_30} & 76 & 5 & \cmark & 7 & TO & -- & -- & TO & -- & -- & $(\always (\Next(x33)) \land \always\eventually (x6)) \to (\always (\Next(x75)) \land \always\eventually (x75))$ \\
+\texttt{gb\_trans\_30} & 76 & 1 & \cmark & 12 & 347 & \cmark & 1 & TO & -- & -- & $(\always\eventually (x31) \land \always\eventually (x33)) \to (\always\eventually (x70))$ \\
+\texttt{gb\_woaf\_30} & 76 & 4 & \cmark & 8 & 398 & \cmark & 1 & TO & -- & -- & $(x33 \land \always\eventually (x15)) \to (x57 \land \always\eventually (x58))$ \\
+\texttt{gb\_fair\_40} & 97 & 82 & \cmark & 22 & TO & -- & -- & TO & -- & -- & $(\always\eventually (\lnot x0)) \to (\always\eventually (x86 \land x86) \land \always\eventually (\lnot x91))$ \\
+\texttt{gb\_trans\_40} & 97 & 0.4 & \cmark & 8 & TO & -- & -- & TO & -- & -- & $(\always\eventually (x43)) \to (\always\eventually (x88))$ \\
+\texttt{gb\_woaf\_40} & 97 & 62 & \cmark & 14 & TO & -- & -- & TO & -- & -- & $(\always (\lnot x1) \land \always\eventually (\lnot x37)) \to (\always (\lnot x62) \land \always\eventually (\lnot x82))$ \\
+\bottomrule
+\end{tabular}
+\end{table*}

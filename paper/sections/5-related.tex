@@ -1,0 +1,48 @@
+\section{Related Work}\label{sec:related}
+
+\paragraph{Specification mining from traces.}
+Flie~\cite{NeiderG18} learns the smallest LTL formula separating
+positive from negative lasso traces via a SAT encoding over syntax
+DAGs---our propositional encoding builds on this framework but
+eliminates temporal operator search by fixing the \GRone skeleton.
+In the finite-trace setting,
+Scarlet~\cite{RahaRFV22} learns LTL$_f$ formulas via scalable
+anytime algorithms, and
+Bolt~\cite{BathieFMMV26} reduces LTL$_f$ learning to Boolean set
+cover.
+Fijalkow and Lagarde~\cite{FijalkowL21} establish complexity bounds
+for passive LTL learning, showing NP-hardness even for restricted
+fragments.
+All of these approaches mine monolithic temporal formulas without
+distinguishing environment assumptions from system guarantees,
+making the resulting specifications unsuitable for reactive synthesis
+without manual restructuring into an assume--guarantee form.
+
+\paragraph{Constrained specification mining.}
+Texada~\cite{LemieuxDB15} was among the first to introduce
+user-specified property templates into specification mining, allowing
+users to constrain the syntactic shape of mined properties.
+LTL-Sketcher~\cite{LutzNR23} extends this idea to sketch
+completion: given a partial LTL formula with holes, it fills them
+from positive and negative examples using a SAT encoding.
+ATLAS~\cite{ZhangCGD25} further generalises structural constraints
+via first-order relational logic in Alloy, reducing constrained LTL
+learning to MaxSAT.
+One can encode \GRone structure as an ATLAS constraint
+(Appendix~\ref{app:alloy}), but the underlying encoding retains
+full LTL temporal semantics, treating \GRone as a filter on the
+general search space rather than exploiting it algorithmically.
+Orthogonally, work on \GRone assumption
+mining~\cite{ChatterjeeHJ08,LiDS11} automatically generates or
+refines environment assumptions for a \emph{given} set of system
+guarantees, while specification
+debugging~\cite{KonighoferHB13} localises errors in existing
+\GRone specifications.
+These approaches assume that part of the specification is already
+known; \toolname mines the complete assume--guarantee formula from
+traces alone.
+More broadly, \toolname differs from all of the above in that the
+\GRone template is not a constraint layered atop a general LTL miner
+but the foundation of the encoding itself: temporal semantics are
+hardcoded, the search is purely propositional, and incremental
+solving shares work across template configurations.

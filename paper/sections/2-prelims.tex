@@ -13,19 +13,12 @@ $\eventually\varphi \equiv \mathit{true} \until \varphi$ and
 $\always\varphi \equiv \lnot\eventually\lnot\varphi$.
 Semantics are defined over infinite words $w \in (2^{\mathit{AP}})^\omega$ in the standard way~\cite{Pnueli77}.
 
-\subsection{Lasso Traces}
-
-An \emph{ultimately periodic word} (lasso trace) is a pair $(u, v)$ with $u \in (2^{\mathit{AP}})^*$ and $v \in (2^{\mathit{AP}})^+$, representing the infinite word $u \cdot v^\omega$.
-We store a lasso trace as a finite vector $\sigma = \sigma[0] \cdots \sigma[L{-}1]$ together with a \emph{lasso start} index $\ell$, so that $\sigma[\ell..L{-}1]$ is the repeating loop.
-For any position $t < L$, the successor is $t{+}1$ if $t < L{-}1$, and $\ell$ otherwise.
-We write $\mathit{loop}(\sigma) = \{\ell, \ldots, L{-}1\}$ for the set of loop positions.
-
 \subsection{GR(1) Specifications}\label{sec:gr1}
 
 A \emph{Generalised Reactivity(1)} (GR(1)) specification~\cite{PitermanPS06} over $\mathit{AP}$ has the form
 \begin{equation}\label{eq:gr1}
   \underbrace{(\varphi_I^e \land \always \varphi_S^e \land
-  \textstyle\bigwedge_{i=1}^{m} \always\eventually J_i)}_{\text{assumptions } A}
+  \textstyle\bigwedge_{i=1}^{m} \always\eventually J_i)}_{\text{assumptions } \mathcal{A}}
   \;\rightarrow\;
   \underbrace{(\varphi_I^s \land \always \varphi_S^s \land
   \textstyle\bigwedge_{j=1}^{k} \always\eventually G_j)}_{\text{guarantees } \mathcal{G}}
@@ -36,12 +29,38 @@ and $J_1, \ldots, J_m$ and $G_1, \ldots, G_k$ are propositional
 \emph{justice} (liveness) conditions.
 Every component is a propositional formula over $\mathit{AP}$ (i.e., built from $\land$, $\lor$, $\lnot$ and variables only); the temporal operators $\always$, $\eventually$ appear only in the fixed positions shown above.
 
-GR(1) is the largest fragment of LTL for which reactive synthesis
+\GRone is the largest fragment of LTL for which reactive synthesis
 is known to be polynomial: the three-nested fixed-point algorithm of Piterman~et~al.~\cite{PitermanPS06} runs in $O(n^3 m k)$ on a game graph with $n$ states, compared to the 2EXPTIME-complete general LTL synthesis problem~\cite{PnueliR89}.
 
-\paragraph{Semantics on lasso traces.}
-A lasso trace $\sigma$ satisfies $\always\eventually J$ iff $J$ holds at some position in $\mathit{loop}(\sigma)$; it satisfies $\always \varphi_S$ iff $\varphi_S$ holds at every position; and it satisfies $\varphi_I$ iff $\varphi_I$ holds at position~0.
-The full formula~\eqref{eq:gr1} is an implication: $\sigma$ satisfies it iff either some assumption fails, or all guarantees hold.
+\paragraph{Environment--system partition.}
+In reactive synthesis, the propositions are partitioned into
+\emph{environment} (input) variables $\mathit{AP}_e$ and
+\emph{system} (output) variables $\mathit{AP}_s$.
+Assumptions constrain the environment; guarantees constrain the
+system.
+A \GRone specification is \emph{realisable} only if this contract
+is respected: justice conditions $J_i$ use only $\mathit{AP}_e$,
+guarantee conditions $G_j$ use only $\mathit{AP}_s$,
+initial conditions are split ($\varphi_I^e$ over $\mathit{AP}_e$,
+$\varphi_I^s$ over $\mathit{AP}_s$), and safety conditions may
+reference all current-state variables but restrict
+\emph{next-state} (primed) variables to their respective
+side---$\varphi_S^e$ primes only $\mathit{AP}_e$,
+$\varphi_S^s$ primes only $\mathit{AP}_s$.
+
+\subsection{Lasso Traces}\label{sec:lasso}
+
+An \emph{ultimately periodic word} (lasso trace) is a pair $(u, v)$ with $u \in (2^{\mathit{AP}})^*$ and $v \in (2^{\mathit{AP}})^+$, representing the infinite word $u \cdot v^\omega$.
+We store a lasso trace as a finite vector $\sigma = \sigma[0] \cdots \sigma[L{-}1]$ together with a \emph{lasso start} index $\ell$, so that $\sigma[\ell..L{-}1]$ is the repeating loop.
+For any position $t < L$, the successor is $t{+}1$ if $t < L{-}1$, and $\ell$ otherwise.
+We write $\mathit{loop}(\sigma) = \{\ell, \ldots, L{-}1\}$ for the set of loop positions.
+
+A lasso trace $\sigma$ satisfies $\always\eventually J$ iff $J$
+holds at some position in $\mathit{loop}(\sigma)$; it satisfies
+$\always \varphi_S$ iff $\varphi_S$ holds at every position; and it
+satisfies $\varphi_I$ iff $\varphi_I$ holds at position~0.
+The full formula~\eqref{eq:gr1} is an implication: $\sigma$ satisfies
+it iff either some assumption fails, or all guarantees hold.
 
 \subsection{The Specification Mining Problem}
 
