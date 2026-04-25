@@ -10,3 +10,8 @@ log/
 **.gz
 **.log
 .idea
+.venv/
+.DS_Store
+__pycache__/
+experiments/automata/
+experiments/tautology/

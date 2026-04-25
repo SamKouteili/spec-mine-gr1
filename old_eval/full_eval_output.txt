@@ -1,0 +1,251 @@
+============================================================================================================================================
+Full Evaluation: Mining + Synthesis + Generalization  (22 benchmarks)
+Traces: 25 pos + 25 neg (mixed SAT + random)  |  Held-out: 100 pos + 100 neg
+Synthesis: GR1Mine -> slugs  |  SAT/DT -> ltlsynt
+============================================================================================================================================
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+specs_A2woef1                                       vars=22 (env=7, sys=15)  J=1 G=5
+  Training: 25 pos, 25 neg  |  Held-out: 100 pos, 25 neg
+  GR1Mine:  D=4  300.5s  ([](x1 | (! x2)) ∧ []<>((! x5) | (x5 & (! x5)))) → ([](! (x15 & x6)) ∧ []<>((x12 & x9) & (
+    Synthesis (slugs): UNREALIZABLE (0.044s)
+    Generalization: 81.6% (102/125)  tp=83 tn=19 fp=6 fn=17
+  SAT:      TIMEOUT (300.0s)
+  DT:       12.5s  atoms=6  prims=5
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+specs_A2wsf1                                        vars=22 (env=7, sys=15)  J=2 G=6
+  Training: 25 pos, 25 neg  |  Held-out: 100 pos, 22 neg
+  GR1Mine:  D=3  138.2s  (! (x0 & x0) ∧ []<>((! x2) | (! x2)) ∧ []<>(! (x4 | x4))) → (x12 | x13 ∧ []<>(x16 & x14))
+    Synthesis (slugs): UNREALIZABLE (0.028s)
+    Generalization: 77.9% (95/122)  tp=80 tn=15 fp=7 fn=20
+  SAT:      TIMEOUT (300.0s)
+  DT:       9.0s  atoms=6  prims=7
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+specs_A2wsf2                                        vars=22 (env=7, sys=15)  J=2 G=6
+  Training: 25 pos, 25 neg  |  Held-out: 100 pos, 19 neg
+  GR1Mine:  D=3  208.6s  ((! x6) | (! x6) ∧ []<>((! x2) & (! x2)) ∧ []<>((x0 | x0) & x0)) → (x10 | (x10 & x10) ∧ []
+    Synthesis (slugs): UNREALIZABLE (0.027s)
+    Generalization: 73.1% (87/119)  tp=75 tn=12 fp=7 fn=25
+  SAT:      TIMEOUT (300.0s)
+  DT:       7.2s  atoms=8  prims=8
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+specs_A2wst1                                        vars=22 (env=7, sys=15)  J=2 G=5
+  Training: 25 pos, 25 neg  |  Held-out: 100 pos, 15 neg
+  GR1Mine:  TIMEOUT (300.0s)
+  SAT:      TIMEOUT (300.0s)
+  DT:       97.9s  atoms=7  prims=9
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+specs_A2wst2                                        vars=22 (env=7, sys=15)  J=2 G=5
+  Training: 25 pos, 25 neg  |  Held-out: 100 pos, 24 neg
+  GR1Mine:  TIMEOUT (300.0s)
+  SAT:      TIMEOUT (300.0s)
+  DT:       61.9s  atoms=6  prims=5
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+specs_G5woef1                                       vars=24 (env=9, sys=15)  J=1 G=6
+  Training: 25 pos, 12 neg  |  Held-out: 100 pos, 0 neg
+  GR1Mine:  D=2  18.2s  (x8 & x8 ∧ []<>(! x8)) → (x9 & x9 ∧ []<>(x21 & x21))
+    Synthesis (slugs): UNREALIZABLE (0.021s)
+    Generalization: 78.0% (78/100)  tp=78 tn=0 fp=0 fn=22
+  SAT:      D=5  8.5s  (x8 -> x10) | (X x8)
+    Synthesis (ltlsynt): REALIZABLE (0.027s)
+    Generalization: 87.0% (87/100)  tp=87 tn=0 fp=0 fn=13
+  DT:       1.9s  atoms=3  prims=3
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+specs_G5wsf1                                        vars=24 (env=9, sys=15)  J=2 G=7
+  Training: 25 pos, 12 neg  |  Held-out: 100 pos, 0 neg
+  GR1Mine:  D=2  27.7s  (! x5 ∧ []<>(! x2)) → (x20 | x20 ∧ []<>(! x21))
+    Synthesis (slugs): UNREALIZABLE (0.030s)
+    Generalization: 80.0% (80/100)  tp=80 tn=0 fp=0 fn=20
+  SAT:      D=4  4.7s  (F x4) U x17
+    Synthesis (ltlsynt): REALIZABLE (0.020s)
+    Generalization: 96.0% (96/100)  tp=96 tn=0 fp=0 fn=4
+  DT:       0.2s  atoms=4  prims=4
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+specs_G5wsf2                                        vars=24 (env=9, sys=15)  J=2 G=7
+  Training: 25 pos, 12 neg  |  Held-out: 100 pos, 0 neg
+  GR1Mine:  D=2  23.2s  ([]<>(! x7)) → ([]<>(x21 | x21))
+    Synthesis (slugs): UNREALIZABLE (0.018s)
+    Generalization: 90.0% (90/100)  tp=90 tn=0 fp=0 fn=10
+  SAT:      D=2  0.5s  F x2
+    Synthesis (ltlsynt): UNREALIZABLE (0.016s)
+    Generalization: 98.0% (98/100)  tp=98 tn=0 fp=0 fn=2
+  DT:       0.4s  atoms=3  prims=1
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+specs_G5wst1                                        vars=24 (env=9, sys=15)  J=2 G=6
+  Training: 25 pos, 12 neg  |  Held-out: 100 pos, 0 neg
+  GR1Mine:  D=2  22.8s  ([]<>(! x5)) → ([]<>(x16 | x16))
+    Synthesis (slugs): UNREALIZABLE (0.024s)
+    Generalization: 88.0% (88/100)  tp=88 tn=0 fp=0 fn=12
+  SAT:      D=2  0.5s  F x16
+    Synthesis (ltlsynt): REALIZABLE (0.014s)
+    Generalization: 99.0% (99/100)  tp=99 tn=0 fp=0 fn=1
+  DT:       0.2s  atoms=2  prims=2
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+specs_G5wst2                                        vars=24 (env=9, sys=15)  J=2 G=6
+  Training: 25 pos, 12 neg  |  Held-out: 100 pos, 0 neg
+  GR1Mine:  D=2  26.5s  ([](! x1) ∧ []<>(! x2)) → ([](! next(x10)) ∧ []<>(x17 | x17))
+    Synthesis (slugs): UNREALIZABLE (0.029s)
+    Generalization: 97.0% (97/100)  tp=97 tn=0 fp=0 fn=3
+  SAT:      D=4  3.4s  (F x0) | x17
+    Synthesis (ltlsynt): REALIZABLE (0.015s)
+    Generalization: 98.0% (98/100)  tp=98 tn=0 fp=0 fn=2
+  DT:       0.7s  atoms=2  prims=2
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+amba_ahb_w_guar_fairness_amba_ahb_1                 vars=16 (env=5, sys=11)  J=2 G=4
+  Training: 25 pos, 25 neg  |  Held-out: 100 pos, 100 neg
+  GR1Mine:  TIMEOUT (300.0s)
+  SAT:      TIMEOUT (300.0s)
+  DT:       3.1s  atoms=8  prims=7
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+amba_ahb_w_guar_fairness_amba_ahb_2                 vars=22 (env=7, sys=15)  J=2 G=6
+  Training: 25 pos, 25 neg  |  Held-out: 100 pos, 18 neg
+  GR1Mine:  D=3  208.7s  ((! x6) & (! x6) ∧ []<>(x5 | x0) ∧ []<>(! (x4 | x4))) → ((! x18) | (! x18) ∧ []<>(x11 & x1
+    Synthesis (slugs): UNREALIZABLE (0.033s)
+    Generalization: 67.8% (80/118)  tp=70 tn=10 fp=8 fn=30
+  SAT:      TIMEOUT (300.0s)
+  DT:       3.6s  atoms=5  prims=2
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+amba_ahb_w_guar_fairness_amba_ahb_3                 vars=28 (env=9, sys=19)  J=2 G=8
+  Training: 25 pos, 13 neg  |  Held-out: 100 pos, 3 neg
+  GR1Mine:  D=1  0.2s  ([]<>(x0)) → ([]<>(x18))
+    Synthesis (slugs): UNREALIZABLE (0.030s)
+    Generalization: 88.3% (91/103)  tp=90 tn=1 fp=2 fn=10
+  SAT:      D=4  8.5s  (F x6) | x15
+    Synthesis (ltlsynt): REALIZABLE (0.027s)
+    Generalization: 95.1% (98/103)  tp=98 tn=0 fp=3 fn=2
+  DT:       0.2s  atoms=5  prims=3
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+amba_ahb_w_guar_trans_amba_ahb_1                    vars=16 (env=5, sys=11)  J=2 G=3
+  Training: 25 pos, 25 neg  |  Held-out: 100 pos, 100 neg
+  GR1Mine:  D=2  70.0s  (! x4 ∧ []<>(x0 & x0) ∧ []<>(! x2)) → (! x15 ∧ []<>(x10 & x10) ∧ []<>(! x5) ∧ []<>(! x8))
+    Synthesis (slugs): UNREALIZABLE (0.020s)
+    Generalization: 71.5% (143/200)  tp=78 tn=65 fp=35 fn=22
+  SAT:      TIMEOUT (300.0s)
+  DT:       6.3s  atoms=7  prims=6
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+amba_ahb_w_guar_trans_amba_ahb_2                    vars=22 (env=7, sys=15)  J=2 G=5
+  Training: 25 pos, 25 neg  |  Held-out: 100 pos, 13 neg
+  GR1Mine:  D=3  169.6s  ((! x3) | (! x3) ∧ []<>((x0 & x0) & (x0 & x0))) → (x8 | x10 ∧ []<>(! (x19 & x19)) ∧ []<>((
+    Synthesis (slugs): UNREALIZABLE (0.025s)
+    Generalization: 72.6% (82/113)  tp=73 tn=9 fp=4 fn=27
+  SAT:      TIMEOUT (300.0s)
+  DT:       14.5s  atoms=6  prims=7
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+amba_ahb_w_guar_trans_amba_ahb_3                    vars=28 (env=9, sys=19)  J=2 G=7
+  Training: 25 pos, 13 neg  |  Held-out: 100 pos, 4 neg
+  GR1Mine:  D=2  30.1s  ([]<>(! x8)) → ([]<>(! x20) ∧ []<>(x14 & x14) ∧ []<>(x26 | x26))
+    Synthesis (slugs): UNREALIZABLE (0.027s)
+    Generalization: 67.3% (70/104)  tp=69 tn=1 fp=3 fn=31
+  SAT:      D=4  3.5s  (F x6) | x12
+    Synthesis (ltlsynt): REALIZABLE (0.029s)
+    Generalization: 94.2% (98/104)  tp=98 tn=0 fp=4 fn=2
+  DT:       0.2s  atoms=2  prims=2
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+amba_ahb_wo_ass_fairness_amba_ahb_1                 vars=16 (env=5, sys=11)  J=1 G=3
+  Training: 25 pos, 25 neg  |  Held-out: 100 pos, 100 neg
+  GR1Mine:  TIMEOUT (300.0s)
+  SAT:      TIMEOUT (300.0s)
+  DT:       12.5s  atoms=8  prims=9
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+amba_ahb_wo_ass_fairness_amba_ahb_2                 vars=22 (env=7, sys=15)  J=1 G=5
+  Training: 25 pos, 25 neg  |  Held-out: 100 pos, 32 neg
+  GR1Mine:  TIMEOUT (300.0s)
+  SAT:      TIMEOUT (300.0s)
+  DT:       6.3s  atoms=5  prims=3
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+amba_ahb_wo_ass_fairness_amba_ahb_3                 vars=28 (env=9, sys=19)  J=1 G=7
+  Training: 25 pos, 14 neg  |  Held-out: 100 pos, 3 neg
+  GR1Mine:  D=2  23.4s  (! x4 ∧ []<>(! x6)) → (x12 & x12 ∧ []<>(x10 | x10))
+    Synthesis (slugs): UNREALIZABLE (0.022s)
+    Generalization: 77.7% (80/103)  tp=79 tn=1 fp=2 fn=21
+  SAT:      D=5  11.6s  (x15 U x3) | x0
+    Synthesis (ltlsynt): UNREALIZABLE (0.027s)
+    Generalization: 82.5% (85/103)  tp=84 tn=1 fp=2 fn=16
+  DT:       2.5s  atoms=6  prims=6
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+gen_buf_w_guar_fairness_5_genbuf                    vars=24 (env=9, sys=15)  J=2 G=7
+  Training: 25 pos, 12 neg  |  Held-out: 100 pos, 0 neg
+  GR1Mine:  D=1  0.1s  ([]<>(x8)) → ([]<>(x20))
+    Synthesis (slugs): UNREALIZABLE (0.018s)
+    Generalization: 88.0% (88/100)  tp=88 tn=0 fp=0 fn=12
+  SAT:      D=4  3.5s  x4 | (F x20)
+    Synthesis (ltlsynt): REALIZABLE (0.015s)
+    Generalization: 97.0% (97/100)  tp=97 tn=0 fp=0 fn=3
+  DT:       0.5s  atoms=5  prims=4
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+gen_buf_w_guar_trans_5_genbuf                       vars=24 (env=9, sys=15)  J=2 G=6
+  Training: 25 pos, 12 neg  |  Held-out: 100 pos, 0 neg
+  GR1Mine:  D=1  1.6s  ([](x8) ∧ []<>(x8)) → ([](x23) ∧ []<>(x17))
+    Synthesis (slugs): UNREALIZABLE (0.047s)
+    Generalization: 95.0% (95/100)  tp=95 tn=0 fp=0 fn=5
+  SAT:      D=2  0.5s  F x7
+    Synthesis (ltlsynt): UNREALIZABLE (0.012s)
+    Generalization: 94.0% (94/100)  tp=94 tn=0 fp=0 fn=6
+  DT:       0.2s  atoms=2  prims=1
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+gen_buf_wo_ass_fairness_5_genbuf                    vars=24 (env=9, sys=15)  J=1 G=6
+  Training: 25 pos, 12 neg  |  Held-out: 100 pos, 0 neg
+  GR1Mine:  D=2  15.3s  ([]<>(! x8)) → ([]<>(x18 | x18) ∧ []<>(! x12))
+    Synthesis (slugs): UNREALIZABLE (0.040s)
+    Generalization: 71.0% (71/100)  tp=71 tn=0 fp=0 fn=29
+  SAT:      D=4  3.6s  x15 -> (x15 U x20)
+    Synthesis (ltlsynt): REALIZABLE (0.015s)
+    Generalization: 91.0% (91/100)  tp=91 tn=0 fp=0 fn=9
+  DT:       0.9s  atoms=3  prims=2
+
+============================================================================================================================================
+SUMMARY
+============================================================================================================================================
+Mined:        GR1 17/22    SAT 11/22    DT 22/22
+Realizable:   GR1 0/17    SAT 8/11
+Unrealizable: GR1 17/17    SAT 3/11
+Avg gen acc:  GR1 80.3%
+              SAT 93.8%
+
+Benchmark                                  | Vars |    GR1_t  Real     D   Acc |    SAT_t  Real     D   Acc |     DT_t
+----------------------------------------------------------------------------------------------------------------------
+specs_A2woef1                              |   22 |   300.5s     N     4   82% |   300.0s     -     -     - |    12.5s
+specs_A2wsf1                               |   22 |   138.2s     N     3   78% |   300.0s     -     -     - |     9.0s
+specs_A2wsf2                               |   22 |   208.6s     N     3   73% |   300.0s     -     -     - |     7.2s
+specs_A2wst1                               |   22 |   300.0s     -     -     - |   300.0s     -     -     - |    97.9s
+specs_A2wst2                               |   22 |   300.0s     -     -     - |   300.0s     -     -     - |    61.9s
+specs_G5woef1                              |   24 |    18.2s     N     2   78% |     8.5s     Y     5   87% |     1.9s
+specs_G5wsf1                               |   24 |    27.7s     N     2   80% |     4.7s     Y     4   96% |     0.2s
+specs_G5wsf2                               |   24 |    23.2s     N     2   90% |     0.5s     N     2   98% |     0.4s
+specs_G5wst1                               |   24 |    22.8s     N     2   88% |     0.5s     Y     2   99% |     0.2s
+specs_G5wst2                               |   24 |    26.5s     N     2   97% |     3.4s     Y     4   98% |     0.7s
+amba_ahb_w_guar_fairness_amba_ahb_1        |   16 |   300.0s     -     -     - |   300.0s     -     -     - |     3.1s
+amba_ahb_w_guar_fairness_amba_ahb_2        |   22 |   208.7s     N     3   68% |   300.0s     -     -     - |     3.6s
+amba_ahb_w_guar_fairness_amba_ahb_3        |   28 |     0.2s     N     1   88% |     8.5s     Y     4   95% |     0.2s
+amba_ahb_w_guar_trans_amba_ahb_1           |   16 |    70.0s     N     2   72% |   300.0s     -     -     - |     6.3s
+amba_ahb_w_guar_trans_amba_ahb_2           |   22 |   169.6s     N     3   73% |   300.0s     -     -     - |    14.5s
+amba_ahb_w_guar_trans_amba_ahb_3           |   28 |    30.1s     N     2   67% |     3.5s     Y     4   94% |     0.2s
+amba_ahb_wo_ass_fairness_amba_ahb_1        |   16 |   300.0s     -     -     - |   300.0s     -     -     - |    12.5s
+amba_ahb_wo_ass_fairness_amba_ahb_2        |   22 |   300.0s     -     -     - |   300.0s     -     -     - |     6.3s
+amba_ahb_wo_ass_fairness_amba_ahb_3        |   28 |    23.4s     N     2   78% |    11.6s     N     5   83% |     2.5s
+gen_buf_w_guar_fairness_5_genbuf           |   24 |     0.1s     N     1   88% |     3.5s     Y     4   97% |     0.5s
+gen_buf_w_guar_trans_5_genbuf              |   24 |     1.6s     N     1   95% |     0.5s     N     2   94% |     0.2s
+gen_buf_wo_ass_fairness_5_genbuf           |   24 |    15.3s     N     2   71% |     3.6s     Y     4   91% |     0.9s
+
+Results saved to /Users/samkouteili/yale/rose/spec-mine-gr1/gr1-mining/full_eval_results.csv

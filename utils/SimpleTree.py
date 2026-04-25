@@ -2,7 +2,7 @@ import pdb
 import re
 from lark import Lark, Transformer
 symmetric_operators = ["&", "|"]
-binary_operators = ["&", "|", "U","->"]
+binary_operators = ["&", "|", "U","->", "<->"]
 unary_operators = ["X", "F", "G", "!"]
 class SimpleTree:
     def __init__(self, label = "dummy"):

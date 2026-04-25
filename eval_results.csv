@@ -1,0 +1,61 @@
+benchmark,num_vars,num_env,num_sys,train_pos,train_neg,gr1_time,gr1_depth,gr1_formula,gr1_timeout,gr1_realizable,gr1_synth_time,atlas_ltl_time,atlas_ltl_formula,atlas_ltl_timeout,atlas_ltl_realizable,atlas_ltl_synth_time,atlas_gr1_time,atlas_gr1_formula,atlas_gr1_timeout,atlas_gr1_realizable,atlas_gr1_synth_time
+amba_ahb_w_guar_fairness_amba_ahb_1,16,5,11,25,25,137.6,3,((! x0) | (! x0) ∧ []<>(x2 | x0)) → (x9 | x7 ∧ []<>((! x7) & (! x7)) ∧ []<>(x9 & x10) ∧ []<>(x11 & x6)),False,True,0.017,600.0,,True,,,600.0,,True,,
+amba_ahb_w_guar_trans_amba_ahb_1,16,5,11,25,25,162.7,3,([]((! next(x2)) | next(x1)) ∧ []<>((x3 | x0) | (x3 | x0))) → ([]((! x14) | ((! x14) & x14)) ∧ []<>(x10 & (! x11))),False,True,0.016,600.0,,True,,,600.0,,True,,
+amba_ahb_wo_ass_fairness_amba_ahb_1,16,5,11,25,25,221.6,4,(! (x3 | x4) ∧ []<>((x3 | x0) | x3)) → (x8 & (! x14) ∧ []<>(x7 & (x7 & x10))),False,True,0.017,600.0,,True,,,600.0,,True,,
+amba_ahb_w_guar_fairness_amba_ahb_2,22,7,15,25,25,138.9,3,([]((! x4) | x3) ∧ []<>(x1 | (! x3))) → ([](next(x17) | (! x20)) ∧ []<>((! x19) & x10)),False,True,0.019,600.0,,True,,,600.0,,True,,
+amba_ahb_w_guar_trans_amba_ahb_2,22,7,15,25,25,360.0,4,([](x1 | (! x2)) ∧ []<>((! x4) | x6)) → ([](next(x11) | (! next(x20))) ∧ []<>((! x19) & x12)),False,True,0.024,600.0,,True,,,600.0,,True,,
+amba_ahb_wo_ass_fairness_amba_ahb_2,22,7,15,25,25,62.2,2,(! x4 ∧ []<>(x3 | x3)) → (x9 | x9 ∧ []<>(! x11) ∧ []<>(! x18) ∧ []<>(! x19) ∧ []<>(! x14)),False,True,0.021,600.0,,True,,,600.0,,True,,
+specs_A2woef1,22,7,15,25,25,35.6,2,(! x0 ∧ []<>(! x4)) → (x10 & x10 ∧ []<>(x9 | x9) ∧ []<>(! x11) ∧ []<>(! x18)),False,True,0.017,600.0,,True,,,600.0,,True,,
+specs_A2wsf1,22,7,15,25,25,140.3,3,(! (x3 | x3) ∧ []<>(x0 & (x0 | x0))) → (x16 | x9 ∧ []<>(x8 & x21) ∧ []<>((x14 & x14) & x14) ∧ []<>((! x21) | (! x21))),False,True,0.032,600.0,,True,,,600.0,,True,,
+specs_A2wsf2,22,7,15,25,25,600.8,4,([](x3 | (! x4)) ∧ []<>((! x2) | ((! x2) & x2))) → ([](! (next(x18) | x18)) ∧ []<>((x21 | x21) | ((x21 | x21) & (x21 | x21)))),False,True,0.032,600.0,,True,,,600.0,,True,,
+specs_A2wst1,22,7,15,25,25,418.1,4,([]((! x4) | x3) ∧ []<>(x2 | (! x3))) → ([]((! x20) | x13) ∧ []<>(x21 & (! x11)),False,True,0.021,600.0,,True,,,600.0,,True,,
+specs_A2wst2,22,7,15,25,25,360.7,4,([](x3 | (! x4)) ∧ []<>((x0 | (x0 & x0)) | x0)) → ([]((! x18) | next(x14)) ∧ []<>(x10 & (! x14))),False,True,0.019,600.0,,True,,,600.0,,True,,
+gen_buf_w_guar_fairness_5_genbuf,24,9,15,25,12,1.5,1,([](x8) ∧ []<>(x2)) → ([](next(x19)) ∧ []<>(x18)),False,True,0.011,10.7,"U(F(x18),x3)",False,False,0.022,118.4,"->(G(F(&(x8,!(x2)))),G(F(x18)))",False,True,0.012
+gen_buf_w_guar_trans_5_genbuf,24,9,15,25,12,1.5,1,([](x8) ∧ []<>(x8)) → ([](x8) ∧ []<>(x23)),False,True,0.011,4.6,F(x7),False,False,0.018,10.2,"->(G(F(x8)),G(F(|(x22,x23))))",False,True,0.009
+gen_buf_wo_ass_fairness_5_genbuf,24,9,15,25,12,17.6,2,([](! x7) ∧ []<>(x4 | x4)) → ([](next(x10) & next(x10)) ∧ []<>(x13 | x13)),False,True,0.012,6.3,"->(X(x12),x1)",False,True,0.009,600.0,,True,,
+specs_G5woef1,24,9,15,25,12,17.5,2,([](! x7) ∧ []<>(x8 | x8)) → ([](next(x16) | next(x16)) ∧ []<>(! x22)),False,True,0.016,7.5,"|(F(x7),x17)",False,True,0.019,600.0,,True,,
+specs_G5wsf1,24,9,15,25,12,1.5,1,([](next(x8)) ∧ []<>(x8)) → ([](next(x23)) ∧ []<>(x23)),False,True,0.016,8.1,"|(F(x7),x23)",False,True,0.017,600.0,,True,,
+specs_G5wsf2,24,9,15,25,12,23.9,2,([]<>(! x0) ∧ []<>(x6 | x6)) → ([]<>(x22 | x22)),False,True,0.018,4.8,F(x23),False,True,0.019,11.3,"->(G(F(x8)),G(F(|(x23,x17))))",False,True,0.011
+specs_G5wst1,24,9,15,25,12,22.4,2,([]<>(! x1) ∧ []<>(! x6)) → ([]<>(x17 | x17)),False,True,0.013,4.6,F(x17),False,True,0.008,10.1,"->(G(F(x8)),G(F(|(x17,x20))))",False,True,0.015
+specs_G5wst2,24,9,15,25,12,1.5,1,([](next(x8)) ∧ []<>(x5)) → ([](x23) ∧ []<>(x18)),False,True,0.012,7.9,"X(->(x19,x7))",False,True,0.01,116.4,"->(G(F(&(!(x3),x5))),G(F(x18)))",False,True,0.012
+amba_ahb_w_guar_fairness_amba_ahb_3,28,9,19,25,13,32.0,2,([](! x4) ∧ []<>(x0 & x0)) → ([](! next(x9)) ∧ []<>(x14 | x14)),False,True,0.017,11.7,"|(x23,X(x2))",False,True,0.019,97.2,"->(G(F(!(|(x1,x7)))),G(F(&(x20,x14))))",False,True,0.013
+amba_ahb_w_guar_trans_amba_ahb_3,28,9,19,25,15,33.3,2,(! x6 ∧ []<>(! x4)) → (x13 | x13 ∧ []<>(! x20)),False,True,0.012,3607.7,,True,,,600.0,,True,,
+amba_ahb_wo_ass_fairness_amba_ahb_3,28,9,19,25,16,23.6,2,(! x6 ∧ []<>(! x7)) → (x15 | x15 ∧ []<>(! x24)),False,True,0.015,12.7,"|(x15,U(x17,x2))",False,True,0.017,600.0,,True,,
+amba_ahb_w_guar_fairness_amba_ahb_4,34,11,23,25,12,0.2,1,([]<>(x0)) → ([]<>(x24)),False,True,0.01,17.2,F(x32),False,True,0.016,32.0,"->(G(F(x0)),G(F(x24)))",False,True,0.014
+amba_ahb_w_guar_trans_amba_ahb_4,34,11,23,25,12,37.0,2,([](! x6) ∧ []<>(! x7)) → ([](! next(x25)) ∧ []<>(! x30)),False,True,0.017,18.0,"|(x22,x17)",False,True,0.017,159.7,"->(G(F(x0)),G(F(|(x21,&(!(x19),x32)))))",False,True,0.013
+amba_ahb_wo_ass_fairness_amba_ahb_4,34,11,23,25,13,25.9,2,([](! x6) ∧ []<>(! x5)) → ([](next(x17) | next(x17)) ∧ []<>(x33 | x33)),False,True,0.012,23.6,"U(F(x17),x7)",False,False,0.018,600.0,,True,,
+specs_A4woef1,34,11,23,25,12,22.8,2,([]<>(! x10) ∧ []<>(x1 & x1)) → ([]<>(x14 | x14) ∧ []<>(x16 & x16)),False,True,0.017,19.5,"U(F(x0),x14)",False,True,0.018,209.3,"->(G(F(x1)),G(F(|(x23,&(x32,x16)))))",False,True,0.013
+specs_A4wsf1,34,11,23,25,12,0.2,1,([]<>(x0)) → ([]<>(x15)),False,True,0.01,17.3,F(x19),False,True,0.017,31.1,"->(G(F(x0)),G(F(x15)))",False,True,0.012
+specs_A4wsf2,34,11,23,25,12,37.1,2,([](! x6) ∧ []<>(! x2)) → ([](! x20) ∧ []<>(x33 | x33)),False,True,0.013,21.5,"U(F(x11),x14)",False,True,0.017,199.8,"->(G(F(&(!(x3),x0))),G(F(x23)))",False,True,0.012
+specs_A4wst1,34,11,23,25,13,1.3,1,([]<>(x3) ∧ []<>(x7)) → ([]<>(x14) ∧ []<>(x32)),False,True,0.01,18.9,"|(F(x4),x14)",False,True,0.017,146.1,"->(G(F(!(|(x0,x6)))),G(F(&(x17,x14))))",False,True,0.012
+specs_A4wst2,34,11,23,25,12,31.4,2,([]<>(! x0)) → ([]<>(x19 | x19)),False,True,0.011,16.7,F(x31),False,True,0.016,28.3,"->(G(F(!(x7))),G(F(x19)))",False,True,0.013
+gen_buf_w_guar_fairness_10_genbuf,35,14,21,25,12,38.9,2,([](! x11) ∧ []<>(! x8)) → ([](! next(x24)) ∧ []<>(! x25)),False,True,0.017,91.0,"|(F(x12),x0)",False,False,0.021,600.0,,True,,
+gen_buf_w_guar_trans_10_genbuf,35,14,21,25,12,32.7,2,([]<>(! x11)) → ([]<>(x26 | x26)),False,True,0.017,19.7,F(x32),False,True,0.017,61.0,"->(G(F(!(x11))),G(F(x26)))",False,True,0.012
+gen_buf_wo_ass_fairness_10_genbuf,35,14,21,25,12,2.2,1,(x13 ∧ []<>(x11)) → (x23 ∧ []<>(x34)),False,True,0.011,50.7,"->(X(x20),x18)",False,True,0.015,91.5,"->(G(F(&(x13,x9))),G(F(x34)))",False,True,0.012
+amba_ahb_w_guar_fairness_amba_ahb_5,40,13,27,25,12,0.2,1,([]<>(x0)) → ([]<>(x19)),False,True,0.011,32.1,F(x38),False,True,0.015,52.6,"->(G(F(x0)),G(F(x18)))",False,True,0.013
+amba_ahb_w_guar_trans_amba_ahb_5,40,13,27,25,12,37.9,2,([]<>(! x0)) → ([]<>(x38 | x38) ∧ []<>(x18 & x18)),False,True,0.013,29.9,"|(x18,x11)",False,True,0.016,344.5,"->(G(F(!(x0))),G(F(&(x37,x38))))",False,True,0.015
+amba_ahb_wo_ass_fairness_amba_ahb_5,40,13,27,25,12,24.2,2,([]<>(! x3)) → ([]<>(x39 & x39)),False,True,0.011,43.5,"|(x17,F(x2))",False,True,0.016,51.1,"->(G(F(!(x3))),G(F(x39)))",False,True,0.012
+specs_A5woef1,40,13,27,25,12,28.3,2,([](! x37) ∧ []<>(x9 & x9)) → ([](! x5) ∧ []<>(x37 | x37)),False,True,0.013,28.4,F(x37),False,True,0.017,48.6,"->(G(F(x7)),G(F(|(x37,x33))))",False,True,0.011
+specs_A5wsf1,40,13,27,25,12,37.6,2,([]<>(! x12)) → ([]<>(x17 | x17)),False,True,0.011,30.4,F(x37),False,True,0.015,50.2,"->(G(F(!(x9))),G(F(x18)))",False,True,0.012
+specs_A5wsf2,40,13,27,25,12,43.5,2,([](! next(x4)) ∧ []<>(! x2)) → ([](! x12) ∧ []<>(x37 | x37)),False,True,0.011,41.8,"F(&(x3,x36))",False,False,0.019,57.4,"->(G(F(x0)),G(F(|(x27,x18))))",False,True,0.015
+specs_A5wst1,40,13,27,25,12,0.8,1,([]<>(x9) ∧ []<>(x1)) → ([]<>(x39)),False,True,0.011,30.9,F(x39),False,True,0.016,53.3,"->(G(F(!(x10))),G(F(x39)))",False,True,0.012
+specs_A5wst2,40,13,27,25,12,0.2,1,([]<>(x0)) → ([]<>(x18)),False,True,0.011,33.1,F(x38),False,True,0.016,54.9,"->(G(F(x0)),G(F(x18)))",False,True,0.013
+gen_buf_w_guar_fairness_20_genbuf,56,24,32,25,12,600.0,,,True,,,105.4,F(x6),False,False,0.019,600.0,,True,,
+gen_buf_w_guar_trans_20_genbuf,56,24,32,25,12,48.8,2,([]<>(! x1)) → ([]<>(x50 | x50)),False,True,0.017,93.1,F(x50),False,True,0.016,8646.7,,True,,
+gen_buf_wo_ass_fairness_20_genbuf,56,24,32,25,12,600.0,,,True,,,8556.9,,True,,,600.0,,True,,
+specs_G20woef1,56,24,32,25,12,38.5,2,([](! next(x19)) ∧ []<>(! x11)) → ([](next(x47) | next(x47)) ∧ []<>(! x52)),False,True,0.013,119.1,"X(->(x43,x52))",False,True,0.015,600.0,,True,,
+specs_G20wsf1,56,24,32,25,12,52.2,2,([]<>(! x7) ∧ []<>(! x20)) → ([]<>(x50 & x50)),False,True,0.017,109.2,F(x13),False,False,0.016,600.0,,True,,
+specs_G20wsf2,56,24,32,25,12,50.7,2,([]<>(! x0)) → ([]<>(x55 | x55)),False,True,0.018,95.9,F(x55),False,True,0.015,175.8,"->(G(F(!(x3))),G(F(x55)))",False,True,0.015
+specs_G20wst1,56,24,32,25,12,52.0,2,([]<>(! x12)) → ([]<>(x46 | x46)),False,True,0.016,111.1,F(x47),False,True,0.016,183.8,"->(G(F(!(x23))),G(F(x55)))",False,True,0.015
+specs_G20wst2,56,24,32,25,12,58.7,2,([](! next(x6)) ∧ []<>(x23 | x23)) → ([](x47 & x47) ∧ []<>(x46 | x46)),False,True,0.014,600.0,,True,,,600.0,,True,,
+gen_buf_w_guar_fairness_30_genbuf,76,34,42,25,12,4.6,1,([](next(x33)) ∧ []<>(x6)) → ([](next(x75)) ∧ []<>(x75)),False,True,0.016,21413.5,,True,,,600.0,,True,,
+gen_buf_w_guar_trans_30_genbuf,76,34,42,25,12,1.2,1,([]<>(x31) ∧ []<>(x33)) → ([]<>(x70)),False,True,0.015,346.7,F(x75),False,True,0.019,600.0,,True,,
+gen_buf_wo_ass_fairness_30_genbuf,76,34,42,25,12,4.4,1,(x33 ∧ []<>(x15)) → (x57 ∧ []<>(x58)),False,True,0.015,398.3,"X(|(x15,x66))",False,True,0.018,600.0,,True,,
+gen_buf_w_guar_fairness_40_genbuf,97,44,53,25,12,82.0,2,([]<>(! x0)) → ([]<>(x86 & x86) ∧ []<>(! x91)),False,True,0.025,600.0,,True,,,0.0,,True,,
+gen_buf_w_guar_trans_40_genbuf,97,44,53,25,12,0.4,1,([]<>(x43)) → ([]<>(x88)),False,True,0.014,600.0,,True,,,600.0,,True,,
+gen_buf_wo_ass_fairness_40_genbuf,97,44,53,25,12,61.9,2,([](! x1) ∧ []<>(! x37)) → ([](! x62) ∧ []<>(! x82)),False,True,0.014,600.0,,True,,,0.0,,True,,
+specs_G100woef1,218,104,114,25,12,50.1,1,(x103 ∧ [](next(x103)) ∧ []<>(x101)) → (x163 ∧ [](x103) ∧ []<>(x150)),False,True,0.015,600.0,,True,,,600.0,,True,,
+specs_G100wsf1,218,104,114,25,12,0.9,1,([]<>(x61)) → ([]<>(x217)),False,True,0.018,600.0,,True,,,600.0,,True,,
+specs_G100wsf2,218,104,114,25,12,182.7,2,([]<>(! x34)) → ([]<>(x206 & x206)),False,True,0.021,600.0,,True,,,600.0,,True,,
+specs_G100wst1,218,104,114,25,12,0.9,1,([]<>(x100)) → ([]<>(x107)),False,True,0.018,600.0,,True,,,600.0,,True,,
+specs_G100wst2,218,104,114,25,12,196.4,2,([]<>(! x63) ∧ []<>(! x12)) → ([]<>(! x209) ∧ []<>(x206 | x206)),False,True,0.022,600.0,,True,,,600.0,,True,,
