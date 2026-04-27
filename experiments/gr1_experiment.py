@@ -16,8 +16,6 @@ from utils.Traces import ExperimentTraces
 from utils.SimpleTree import Formula
 from utils.GR1Formula import GR1Formula
 from smtEncoding.gr1SATEncoding import GR1SATEncoding
-from smtEncoding.dagSATEncoding import DagSATEncoding
-from formulaBuilder.satQuerying import get_models
 from experiments.gr1TestFileGeneration import generateTracesFromGR1
 
 
@@ -215,16 +213,6 @@ def verify_formula(formula, traces):
     return True
 
 
-def run_baseline_solver(traces, max_depth):
-    """Run the baseline Neider-Gavran LTL miner for comparison."""
-    from pytictoc import TicToc
-    t = TicToc()
-    t.tic()
-    results = get_models(max_depth, traces, 1, 1, DagSATEncoding, 1)
-    time_passed = t.tocvalue()
-    return results, time_passed
-
-
 def main():
     parser = argparse.ArgumentParser(description='GR(1) Specification Mining')
     parser.add_argument('--traces', dest='tracesFileName', default=None,
@@ -236,8 +224,6 @@ def main():
                         help='Number of justice (assumption) conditions')
     parser.add_argument('--num_guarantees', type=int, default=1,
                         help='Number of guarantee conditions')
-    parser.add_argument('--compare_baseline', action='store_true',
-                        help='Also run baseline LTL miner for comparison')
     parser.add_argument('--generate', action='store_true',
                         help='Generate traces from a built-in GR(1) spec')
     parser.add_argument('--num_vars', type=int, default=2,
@@ -300,21 +286,6 @@ def main():
         print("\nGR(1) miner: UNSAT (no formula found up to depth %d)" % args.max_depth)
         print("Time: %.3fs" % time_gr1)
 
-    # Optionally compare with baseline
-    if args.compare_baseline:
-        logging.info("Running baseline LTL miner...")
-        # Give baseline all operators
-        traces.operators = ['G', 'F', '!', 'U', '&', '|', '->', 'X']
-        results, time_ltl = run_baseline_solver(traces, args.max_depth * 2)
-        print("\n=== Baseline LTL Result ===")
-        if results:
-            print("Formula: %s" % results[0].prettyPrint(True))
-        else:
-            print("No formula found")
-        print("Time:    %.3fs" % time_ltl)
-
-        if formula is not None and results:
-            print("\n=== Speedup: %.2fx ===" % (time_ltl / time_gr1 if time_gr1 > 0 else float('inf')))
 
 
 if __name__ == '__main__':
