@@ -18,11 +18,11 @@ from utils.GR1Formula import GR1Formula
 from smtEncoding.gr1SATEncoding import GR1SATEncoding
 from experiments.gr1_experiment import generate_template_configs, verify_formula
 
-SPECTRA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'spectra-specs')
+SPECTRA_DIR = os.path.join(os.path.dirname(__file__), '..', 'benchmarks')
 SLUGS_BIN = os.path.join(os.path.dirname(__file__), '..', '..', 'slugs', 'src', 'slugs')
 ATLAS_JAR = os.path.join(os.path.dirname(__file__), '..', '..', 'ATLAS', 'bin', 'Atlas.jar')
 
-MINE_TIMEOUT = 600
+MINE_TIMEOUT = 300
 SYNTH_TIMEOUT = 60
 TRAIN_POS = 25
 TRAIN_NEG = 25
@@ -449,18 +449,36 @@ def main():
     parser.add_argument('--max-vars', type=int, default=300)
     parser.add_argument('--benchmarks', type=str, default=None,
                         help='Comma-separated benchmark names (substrings) to run')
+    parser.add_argument('--miners', type=str, default=None,
+                        help='Comma-separated miners to run: gr1,atlas_ltl,atlas_gr1 (default: all)')
     parser.add_argument('--append-csv', action='store_true',
                         help='Append results to existing CSV instead of overwriting')
     args = parser.parse_args()
+
+    ALL_MINERS = {'gr1', 'atlas_ltl', 'atlas_gr1'}
+    if args.miners:
+        active_miners = {m.strip() for m in args.miners.split(',')}
+        unknown = active_miners - ALL_MINERS
+        if unknown:
+            parser.error("Unknown miners: %s. Choose from: %s" % (
+                ', '.join(unknown), ', '.join(sorted(ALL_MINERS))))
+    else:
+        active_miners = ALL_MINERS
+    run_gr1 = 'gr1' in active_miners
+    run_atlas_ltl = 'atlas_ltl' in active_miners
+    run_atlas_gr1 = 'atlas_gr1' in active_miners
     benchmarks = find_benchmarks(max_vars=args.max_vars)
     if args.benchmarks:
         filters = [f.strip() for f in args.benchmarks.split(',')]
         benchmarks = [b for b in benchmarks
                       if any(f in b['name'] for f in filters)]
+    miner_names = []
+    if run_gr1: miner_names.append('GR1Mine')
+    if run_atlas_ltl: miner_names.append('ATLAS[LTL]')
+    if run_atlas_gr1: miner_names.append('ATLAS[GR1]')
     print("=" * 140)
-    print("Evaluation: GR1Mine vs ATLAS[LTL] vs ATLAS[GR1]  (%d benchmarks)" % len(benchmarks))
+    print("Evaluation: %s  (%d benchmarks)" % (' vs '.join(miner_names), len(benchmarks)))
     print("Traces: %d pos + %d neg (mixed SAT + random)" % (TRAIN_POS, TRAIN_NEG))
-    print("Synthesis: GR1Mine + ATLAS[GR1] -> slugs  |  ATLAS[LTL] -> ltlsynt")
     print("=" * 140)
 
     results = []
@@ -501,81 +519,87 @@ def main():
             'train_pos': len(train_pos), 'train_neg': len(train_neg),
         }
 
-        # Write ATLAS trace files
-        pos_str, neg_str = traces_to_atlas_format(train_pos, train_neg)
-        atlas_uncon_path = os.path.join(tmpdir, '%s_uncon.trace' % name)
-        atlas_gr1_path = os.path.join(tmpdir, '%s_gr1.trace' % name)
-        write_atlas_unconstrained(pos_str, neg_str, num_vars, 5, atlas_uncon_path)
-        write_atlas_gr1(pos_str, neg_str, num_vars, 5, env_indices, atlas_gr1_path)
+        # Write ATLAS trace files (only if needed)
+        if run_atlas_ltl or run_atlas_gr1:
+            pos_str, neg_str = traces_to_atlas_format(train_pos, train_neg)
+            atlas_uncon_path = os.path.join(tmpdir, '%s_uncon.trace' % name)
+            atlas_gr1_path = os.path.join(tmpdir, '%s_gr1.trace' % name)
+            if run_atlas_ltl:
+                write_atlas_unconstrained(pos_str, neg_str, num_vars, 5, atlas_uncon_path)
+            if run_atlas_gr1:
+                write_atlas_gr1(pos_str, neg_str, num_vars, 5, env_indices, atlas_gr1_path)
 
         # ==================== GR1Mine ====================
-        traces_gr1 = ExperimentTraces(
-            tracesToAccept=list(train_pos), tracesToReject=list(train_neg),
-            operators=['&', '|', '!'])
-        gr1_f, gr1_d, gr1_time, gr1_cfg = mine_gr1(
-            traces_gr1, 5, min(nj + 1, 4), min(ng + 1, 4), env_indices)
+        if run_gr1:
+            traces_gr1 = ExperimentTraces(
+                tracesToAccept=list(train_pos), tracesToReject=list(train_neg),
+                operators=['&', '|', '!'])
+            gr1_f, gr1_d, gr1_time, gr1_cfg = mine_gr1(
+                traces_gr1, 5, min(nj + 1, 4), min(ng + 1, 4), env_indices)
 
-        row['gr1_time'] = gr1_time
-        row['gr1_depth'] = gr1_d
-        row['gr1_formula'] = str(gr1_f) if gr1_f else None
-        row['gr1_timeout'] = gr1_f is None
+            row['gr1_time'] = gr1_time
+            row['gr1_depth'] = gr1_d
+            row['gr1_formula'] = str(gr1_f) if gr1_f else None
+            row['gr1_timeout'] = gr1_f is None
 
-        if gr1_f:
-            print("  GR1Mine:     D=%s  %.1fs  %s" % (gr1_d, gr1_time, str(gr1_f)[:80]))
-            slugs_in = gr1_to_slugs(gr1_f, env_vars, sys_vars, all_vars)
-            real, synth_t = synthesize_slugs(slugs_in)
-            row['gr1_realizable'] = real
-            row['gr1_synth_time'] = synth_t
-            status = 'REALIZABLE' if real else ('UNREALIZABLE' if real is False else 'ERROR')
-            print("    Synthesis (slugs): %s (%.3fs)" % (status, synth_t))
-        else:
-            print("  GR1Mine:     TIMEOUT (%.1fs)" % gr1_time)
-            row['gr1_realizable'] = None
-            row['gr1_synth_time'] = None
-
-        # ==================== ATLAS[LTL] ====================
-        atlas_ltl_f, atlas_ltl_t, atlas_ltl_raw = mine_atlas(atlas_uncon_path)
-
-        row['atlas_ltl_time'] = atlas_ltl_t
-        row['atlas_ltl_formula'] = atlas_ltl_f
-        row['atlas_ltl_timeout'] = atlas_ltl_f is None
-
-        if atlas_ltl_f:
-            print("  ATLAS[LTL]:  %.1fs  %s" % (atlas_ltl_t, atlas_ltl_f[:80]))
-            real, synth_t = synthesize_ltlsynt(atlas_ltl_f, env_vars, sys_vars, all_vars)
-            row['atlas_ltl_realizable'] = real
-            row['atlas_ltl_synth_time'] = synth_t
-            status = 'REALIZABLE' if real else ('UNREALIZABLE' if real is False else 'ERROR')
-            print("    Synthesis (ltlsynt): %s (%.3fs)" % (status, synth_t))
-        else:
-            print("  ATLAS[LTL]:  TIMEOUT (%.1fs)" % (atlas_ltl_t or 0))
-            row['atlas_ltl_realizable'] = None
-            row['atlas_ltl_synth_time'] = None
-
-        # ==================== ATLAS[GR1] ====================
-        atlas_gr1_f, atlas_gr1_t, atlas_gr1_raw = mine_atlas(atlas_gr1_path)
-
-        row['atlas_gr1_time'] = atlas_gr1_t
-        row['atlas_gr1_formula'] = atlas_gr1_f
-        row['atlas_gr1_timeout'] = atlas_gr1_f is None
-
-        if atlas_gr1_f:
-            print("  ATLAS[GR1]:  %.1fs  %s" % (atlas_gr1_t, atlas_gr1_f[:80]))
-            slugs_in = atlas_gr1_to_slugs(atlas_gr1_f, env_vars, sys_vars)
-            if slugs_in:
+            if gr1_f:
+                print("  GR1Mine:     D=%s  %.1fs  %s" % (gr1_d, gr1_time, str(gr1_f)[:80]))
+                slugs_in = gr1_to_slugs(gr1_f, env_vars, sys_vars, all_vars)
                 real, synth_t = synthesize_slugs(slugs_in)
-                row['atlas_gr1_realizable'] = real
-                row['atlas_gr1_synth_time'] = synth_t
+                row['gr1_realizable'] = real
+                row['gr1_synth_time'] = synth_t
                 status = 'REALIZABLE' if real else ('UNREALIZABLE' if real is False else 'ERROR')
                 print("    Synthesis (slugs): %s (%.3fs)" % (status, synth_t))
             else:
-                print("    Synthesis: SKIP (can't parse formula for slugs)")
+                print("  GR1Mine:     TIMEOUT (%.1fs)" % gr1_time)
+                row['gr1_realizable'] = None
+                row['gr1_synth_time'] = None
+
+        # ==================== ATLAS[LTL] ====================
+        if run_atlas_ltl:
+            atlas_ltl_f, atlas_ltl_t, atlas_ltl_raw = mine_atlas(atlas_uncon_path)
+
+            row['atlas_ltl_time'] = atlas_ltl_t
+            row['atlas_ltl_formula'] = atlas_ltl_f
+            row['atlas_ltl_timeout'] = atlas_ltl_f is None
+
+            if atlas_ltl_f:
+                print("  ATLAS[LTL]:  %.1fs  %s" % (atlas_ltl_t, atlas_ltl_f[:80]))
+                real, synth_t = synthesize_ltlsynt(atlas_ltl_f, env_vars, sys_vars, all_vars)
+                row['atlas_ltl_realizable'] = real
+                row['atlas_ltl_synth_time'] = synth_t
+                status = 'REALIZABLE' if real else ('UNREALIZABLE' if real is False else 'ERROR')
+                print("    Synthesis (ltlsynt): %s (%.3fs)" % (status, synth_t))
+            else:
+                print("  ATLAS[LTL]:  TIMEOUT (%.1fs)" % (atlas_ltl_t or 0))
+                row['atlas_ltl_realizable'] = None
+                row['atlas_ltl_synth_time'] = None
+
+        # ==================== ATLAS[GR1] ====================
+        if run_atlas_gr1:
+            atlas_gr1_f, atlas_gr1_t, atlas_gr1_raw = mine_atlas(atlas_gr1_path)
+
+            row['atlas_gr1_time'] = atlas_gr1_t
+            row['atlas_gr1_formula'] = atlas_gr1_f
+            row['atlas_gr1_timeout'] = atlas_gr1_f is None
+
+            if atlas_gr1_f:
+                print("  ATLAS[GR1]:  %.1fs  %s" % (atlas_gr1_t, atlas_gr1_f[:80]))
+                slugs_in = atlas_gr1_to_slugs(atlas_gr1_f, env_vars, sys_vars)
+                if slugs_in:
+                    real, synth_t = synthesize_slugs(slugs_in)
+                    row['atlas_gr1_realizable'] = real
+                    row['atlas_gr1_synth_time'] = synth_t
+                    status = 'REALIZABLE' if real else ('UNREALIZABLE' if real is False else 'ERROR')
+                    print("    Synthesis (slugs): %s (%.3fs)" % (status, synth_t))
+                else:
+                    print("    Synthesis: SKIP (can't parse formula for slugs)")
+                    row['atlas_gr1_realizable'] = None
+                    row['atlas_gr1_synth_time'] = None
+            else:
+                print("  ATLAS[GR1]:  TIMEOUT (%.1fs)" % (atlas_gr1_t or 0))
                 row['atlas_gr1_realizable'] = None
                 row['atlas_gr1_synth_time'] = None
-        else:
-            print("  ATLAS[GR1]:  TIMEOUT (%.1fs)" % (atlas_gr1_t or 0))
-            row['atlas_gr1_realizable'] = None
-            row['atlas_gr1_synth_time'] = None
 
         results.append(row)
         sys.stdout.flush()

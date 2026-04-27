@@ -8,8 +8,14 @@ class GR1SATEncoding:
     SAT encoding for mining GR(1) specifications of the form:
         (Init_e ∧ □Safety_e ∧ □◇J_1 ∧ ... ∧ □◇J_m) → (Init_s ∧ □Safety_s ∧ □◇G_1 ∧ ... ∧ □◇G_k)
 
-    Each component is a propositional formula encoded as a mini-DAG of size D.
-    The temporal skeleton is fixed — only propositional operators (&, |, !) are searched.
+    Each component is a propositional formula encoded as a literal-leaves tree:
+    D leaf nodes (each a variable with a polarity flag for negation) connected
+    by D-1 internal binary operator nodes (& or |).  The temporal skeleton is
+    fixed — only propositional structure is searched.
+
+    D=1: single literal (x or ¬x).
+    D=2: two literals combined by one binary op.
+    D=k: k literals, k-1 binary operators.
 
     Implements the same interface as DagSATEncoding so it can be used with
     the existing satQuerying.py solving loop.
@@ -36,10 +42,7 @@ class GR1SATEncoding:
         self.solver = Solver()
 
         self.listOfVariables = list(range(n))
-        self.propOperators = ['&', '|', '!']
-        self.unaryOperators = ['!']
         self.binaryOperators = ['&', '|']
-        self.operatorsAndVariables = self.propOperators + self.listOfVariables
 
         # Component names
         self.justice_names = ['J_%d' % i for i in range(num_justices)]
@@ -71,6 +74,7 @@ class GR1SATEncoding:
         self.l = {}
         self.r = {}
         self.y = {}
+        self.neg = {}
         self.holds = {}
 
         self.allTraces = self.traces.acceptedTraces + self.traces.rejectedTraces
@@ -115,9 +119,15 @@ class GR1SATEncoding:
         else:
             return list(range(n))
 
-    def _get_ops_and_vars(self, comp):
-        """Return operators + variables list for a component."""
-        return self.propOperators + self._get_variables_for_component(comp)
+    def _total_nodes(self):
+        """Total nodes in the literal-leaves tree: max(1, 2*D - 1)."""
+        return max(1, 2 * self.formulaDepth - 1)
+
+    def _root_index(self):
+        """Index of the root node."""
+        if self.formulaDepth <= 1:
+            return 0
+        return 2 * self.formulaDepth - 2
 
     def getInformativeVariables(self):
         res = []
@@ -125,6 +135,7 @@ class GR1SATEncoding:
             res += list(self.x[comp].values())
             res += list(self.l[comp].values())
             res += list(self.r[comp].values())
+            res += list(self.neg[comp].values())
         return res
 
     def encodeFormula(self, unsatCore=True):
@@ -157,23 +168,39 @@ class GR1SATEncoding:
 
     def _createComponentVariables(self, comp):
         D = self.formulaDepth
-        comp_ops_and_vars = self._get_ops_and_vars(comp)
+        total = self._total_nodes()
+        comp_vars = self._get_variables_for_component(comp)
 
-        self.x[comp] = {
-            (i, o): Bool('x_%s_%d_%s' % (comp, i, str(o)))
-            for i in range(D) for o in comp_ops_and_vars
+        # x: leaves select a variable, internals select a binary operator
+        x_dict = {}
+        for i in range(D):
+            for v in comp_vars:
+                x_dict[(i, v)] = Bool('x_%s_%d_%s' % (comp, i, str(v)))
+        for i in range(D, total):
+            for op in self.binaryOperators:
+                x_dict[(i, op)] = Bool('x_%s_%d_%s' % (comp, i, op))
+        self.x[comp] = x_dict
+
+        # neg: polarity flag for each leaf (True = negated literal)
+        self.neg[comp] = {
+            i: Bool('neg_%s_%d' % (comp, i))
+            for i in range(D)
         }
+
+        # l, r: only for internal nodes
         self.l[comp] = {
             (i, j): Bool('l_%s_%d_%d' % (comp, i, j))
-            for i in range(1, D) for j in range(i)
+            for i in range(D, total) for j in range(i)
         }
         self.r[comp] = {
             (i, j): Bool('r_%s_%d_%d' % (comp, i, j))
-            for i in range(1, D) for j in range(i)
+            for i in range(D, total) for j in range(i)
         }
+
+        # y: all nodes (leaves + internals)
         self.y[comp] = {
             (i, trIdx, t): Bool('y_%s_%d_%d_%d' % (comp, i, trIdx, t))
-            for i in range(D)
+            for i in range(total)
             for trIdx, tr in enumerate(self.allTraces)
             for t in range(tr.lengthOfTrace)
         }
@@ -183,130 +210,128 @@ class GR1SATEncoding:
         }
 
     def _addStructuralConstraints(self, comp):
-        """Add DAG structural constraints for a component (propositional operators only)."""
+        """Add structural constraints for the literal-leaves encoding.
+
+        Leaf nodes (0..D-1): exactly one variable selected (polarity is free).
+        Internal nodes (D..2D-2): exactly one binary operator, exactly one left/right child.
+        No-dangling: every non-root node must be referenced as a child.
+        """
         D = self.formulaDepth
+        total = self._total_nodes()
         x = self.x[comp]
         l = self.l[comp]
         r = self.r[comp]
         comp_vars = self._get_variables_for_component(comp)
-        comp_ops_and_vars = self._get_ops_and_vars(comp)
 
-        # Exactly one operator/variable per node
+        # Leaf nodes: exactly one variable
         for i in range(D):
-            node_vars = [x[(i, o)] for o in comp_ops_and_vars]
+            node_vars = [x[(i, v)] for v in comp_vars]
             self.solver.assert_and_track(
                 AtMost(*node_vars, 1),
-                'atmost_one_op_%s_%d' % (comp, i)
+                'atmost_one_var_%s_%d' % (comp, i)
             )
             self.solver.assert_and_track(
                 AtLeast(*node_vars, 1),
+                'atleast_one_var_%s_%d' % (comp, i)
+            )
+
+        # Internal nodes: exactly one operator, exactly one left/right child
+        for i in range(D, total):
+            op_vars = [x[(i, op)] for op in self.binaryOperators]
+            self.solver.assert_and_track(
+                AtMost(*op_vars, 1),
+                'atmost_one_op_%s_%d' % (comp, i)
+            )
+            self.solver.assert_and_track(
+                AtLeast(*op_vars, 1),
                 'atleast_one_op_%s_%d' % (comp, i)
             )
 
-        # Node 0 must be a propositional variable
-        self.solver.assert_and_track(
-            Or([x[(0, v)] for v in comp_vars]),
-            'first_is_var_%s' % comp
-        )
-
-        if D <= 1:
-            return
-
-        # No dangling nodes
-        self.solver.assert_and_track(
-            And([
-                Or(
-                    Or([l[(rowId, i)] for rowId in range(i + 1, D)]),
-                    Or([r[(rowId, i)] for rowId in range(i + 1, D)])
-                )
-                for i in range(D - 1)
-            ]),
-            'no_dangling_%s' % comp
-        )
-
-        for i in range(1, D):
-            # Binary operators (&, |): exactly one left and right child
+            left_vars = [l[(i, j)] for j in range(i)]
             self.solver.assert_and_track(
-                Implies(
-                    Or([x[(i, op)] for op in self.binaryOperators]),
-                    And(
-                        AtMost(*[l[(i, j)] for j in range(i)], 1),
-                        AtLeast(*[l[(i, j)] for j in range(i)], 1),
-                        AtMost(*[r[(i, j)] for j in range(i)], 1),
-                        AtLeast(*[r[(i, j)] for j in range(i)], 1),
-                    )
-                ),
-                'binary_children_%s_%d' % (comp, i)
+                AtMost(*left_vars, 1),
+                'atmost_one_left_%s_%d' % (comp, i)
+            )
+            self.solver.assert_and_track(
+                AtLeast(*left_vars, 1),
+                'atleast_one_left_%s_%d' % (comp, i)
             )
 
-            # Unary operator (!): exactly one left child, no right child
+            right_vars = [r[(i, j)] for j in range(i)]
             self.solver.assert_and_track(
-                Implies(
-                    Or([x[(i, op)] for op in self.unaryOperators]),
-                    And(
-                        AtMost(*[l[(i, j)] for j in range(i)], 1),
-                        AtLeast(*[l[(i, j)] for j in range(i)], 1),
-                        Not(Or([r[(i, j)] for j in range(i)])),
-                    )
-                ),
-                'unary_children_%s_%d' % (comp, i)
+                AtMost(*right_vars, 1),
+                'atmost_one_right_%s_%d' % (comp, i)
+            )
+            self.solver.assert_and_track(
+                AtLeast(*right_vars, 1),
+                'atleast_one_right_%s_%d' % (comp, i)
             )
 
-            # Variables: no children
-            self.solver.assert_and_track(
-                Implies(
-                    Or([x[(i, v)] for v in comp_vars]),
-                    And(
-                        Not(Or([l[(i, j)] for j in range(i)])),
-                        Not(Or([r[(i, j)] for j in range(i)])),
+        # No dangling nodes: every non-root node must be someone's child
+        if total > 1:
+            root = total - 1
+            for i in range(root):
+                parents_l = [l[(rid, i)] for rid in range(D, total) if (rid, i) in l]
+                parents_r = [r[(rid, i)] for rid in range(D, total) if (rid, i) in r]
+                parent_refs = parents_l + parents_r
+                if parent_refs:
+                    self.solver.assert_and_track(
+                        Or(parent_refs),
+                        'no_dangling_%s_%d' % (comp, i)
                     )
-                ),
-                'var_no_children_%s_%d' % (comp, i)
-            )
 
     def _addPropSemantics(self, comp):
-        """Add propositional semantics constraints for a component."""
+        """Add propositional semantics for literal-leaves encoding.
+
+        Leaves: y = trace_value XOR neg (polarity flag).
+        Internal nodes: y = left OP right (only & and |).
+        """
         D = self.formulaDepth
+        total = self._total_nodes()
         x = self.x[comp]
         l = self.l[comp]
         r = self.r[comp]
         y = self.y[comp]
+        neg = self.neg[comp]
         comp_vars = self._get_variables_for_component(comp)
         n = self.traces.numVariables
 
         for trIdx, tr in enumerate(self.allTraces):
+            # Leaf semantics (nodes 0..D-1) with polarity
             for i in range(D):
                 for p in comp_vars:
                     if p < n:
-                        # Current-state variable: value at time t
                         self.solver.assert_and_track(
                             Implies(
                                 x[(i, p)],
                                 And([
-                                    y[(i, trIdx, t)] if tr.traceVector[t][p]
-                                    else Not(y[(i, trIdx, t)])
+                                    y[(i, trIdx, t)] == (
+                                        Not(neg[i]) if tr.traceVector[t][p]
+                                        else neg[i]
+                                    )
                                     for t in range(tr.lengthOfTrace)
                                 ])
                             ),
                             'var_sem_%s_%d_%d_%d' % (comp, i, p, trIdx)
                         )
                     else:
-                        # Primed variable: value from successor position
                         orig_var = p - n
                         self.solver.assert_and_track(
                             Implies(
                                 x[(i, p)],
                                 And([
-                                    y[(i, trIdx, t)] if tr.traceVector[tr.nextPos(t)][orig_var]
-                                    else Not(y[(i, trIdx, t)])
+                                    y[(i, trIdx, t)] == (
+                                        Not(neg[i]) if tr.traceVector[tr.nextPos(t)][orig_var]
+                                        else neg[i]
+                                    )
                                     for t in range(tr.lengthOfTrace)
                                 ])
                             ),
                             'var_sem_prime_%s_%d_%d_%d' % (comp, i, p, trIdx)
                         )
 
-            for i in range(1, D):
-                # Conjunction
+            # Internal semantics (nodes D..total-1): only & and |
+            for i in range(D, total):
                 self.solver.assert_and_track(
                     Implies(
                         x[(i, '&')],
@@ -325,7 +350,6 @@ class GR1SATEncoding:
                     'and_sem_%s_%d_%d' % (comp, i, trIdx)
                 )
 
-                # Disjunction
                 self.solver.assert_and_track(
                     Implies(
                         x[(i, '|')],
@@ -344,31 +368,13 @@ class GR1SATEncoding:
                     'or_sem_%s_%d_%d' % (comp, i, trIdx)
                 )
 
-                # Negation
-                self.solver.assert_and_track(
-                    Implies(
-                        x[(i, '!')],
-                        And([
-                            Implies(
-                                l[(i, child)],
-                                And([
-                                    y[(i, trIdx, t)] == Not(y[(child, trIdx, t)])
-                                    for t in range(tr.lengthOfTrace)
-                                ])
-                            )
-                            for child in range(i)
-                        ])
-                    ),
-                    'not_sem_%s_%d_%d' % (comp, i, trIdx)
-                )
-
     def _addTemporalHoldsConstraints(self):
         """Add temporal semantics: connect holds[comp] to y[comp] at root.
 
         These are per-component and independent of which template config is
         active, so they are encoded once and persist across push/pop.
         """
-        D = self.formulaDepth
+        root = self._root_index()
 
         for trIdx, tr in enumerate(self.allTraces):
             loop_positions = list(range(tr.lassoStart, tr.lengthOfTrace))
@@ -377,28 +383,28 @@ class GR1SATEncoding:
             for name in self.init_names:
                 self.solver.assert_and_track(
                     self.holds[name][trIdx] ==
-                    self.y[name][(D - 1, trIdx, 0)],
+                    self.y[name][(root, trIdx, 0)],
                     'init_holds_%s_%d' % (name, trIdx)
                 )
 
             for name in self.safety_names:
                 self.solver.assert_and_track(
                     self.holds[name][trIdx] ==
-                    And([self.y[name][(D - 1, trIdx, t)] for t in all_positions]),
+                    And([self.y[name][(root, trIdx, t)] for t in all_positions]),
                     'safety_holds_%s_%d' % (name, trIdx)
                 )
 
             for jname in self.justice_names:
                 self.solver.assert_and_track(
                     self.holds[jname][trIdx] ==
-                    Or([self.y[jname][(D - 1, trIdx, t)] for t in loop_positions]),
+                    Or([self.y[jname][(root, trIdx, t)] for t in loop_positions]),
                     'justice_holds_%s_%d' % (jname, trIdx)
                 )
 
             for gname in self.guarantee_names:
                 self.solver.assert_and_track(
                     self.holds[gname][trIdx] ==
-                    Or([self.y[gname][(D - 1, trIdx, t)] for t in loop_positions]),
+                    Or([self.y[gname][(root, trIdx, t)] for t in loop_positions]),
                     'guarantee_holds_%s_%d' % (gname, trIdx)
                 )
 
@@ -430,58 +436,29 @@ class GR1SATEncoding:
         """Add symmetry-breaking constraints to prune equivalent solutions."""
         for comp in self.component_names:
             self._addCommutativeChildOrdering(comp)
-            self._addDoubleNegationElimination(comp)
         self._addComponentPermutationBreaking(self.justice_names)
         self._addComponentPermutationBreaking(self.guarantee_names)
 
     def _addCommutativeChildOrdering(self, comp):
-        """For commutative operators (& and |), enforce left_child ≤ right_child.
-
-        The formulas (a & b) and (b & a) are equivalent. By requiring the left
-        child index to be ≤ the right child index, we eliminate half the search
-        space for every binary node.
-        """
+        """For commutative operators (& and |), enforce left_child ≤ right_child."""
         D = self.formulaDepth
-        if D <= 1:
+        total = self._total_nodes()
+        if total <= 1:
             return
         x = self.x[comp]
         l = self.l[comp]
         r = self.r[comp]
 
-        for i in range(1, D):
+        for i in range(D, total):
             for la in range(i):
                 for ra in range(i):
                     if ra < la:
-                        # If node i is commutative and has left=la, right=ra with ra < la,
-                        # that's a symmetry violation — block it
                         self.solver.add(
                             Implies(
                                 Or(x[(i, '&')], x[(i, '|')]),
                                 Not(And(l[(i, la)], r[(i, ra)]))
                             )
                         )
-
-    def _addDoubleNegationElimination(self, comp):
-        """Prevent ¬(¬φ) — if node i is !, its child cannot be !.
-
-        Double negation is always redundant, so any solution containing it
-        has an equivalent smaller solution without it.
-        """
-        D = self.formulaDepth
-        if D <= 2:
-            return
-        x = self.x[comp]
-        l = self.l[comp]
-
-        for i in range(1, D):
-            for child in range(i):
-                if child >= 1:  # child must be an internal node to be !
-                    self.solver.add(
-                        Implies(
-                            And(x[(i, '!')], l[(i, child)]),
-                            Not(x[(child, '!')])
-                        )
-                    )
 
     def _addComponentPermutationBreaking(self, component_names):
         """Order interchangeable components lexicographically by structure.
@@ -490,30 +467,40 @@ class GR1SATEncoding:
         so any permutation gives an equivalent formula. Same for guarantees.
 
         We break this by requiring that the operator/variable chosen at the root
-        of component i is ≤ that of component i+1 (using the index in the
-        operators-and-variables list as the ordering).
+        of component i is ≤ that of component i+1.
         """
         if len(component_names) < 2:
             return
         D = self.formulaDepth
-        root = D - 1
+        root = self._root_index()
 
         for idx in range(len(component_names) - 1):
             c1 = component_names[idx]
             c2 = component_names[idx + 1]
-            ops_vars = self._get_ops_and_vars(c1)
 
-            # For each pair (o1, o2) where o1 appears after o2 in the ordering,
-            # block c1=o1 and c2=o2 at the root
-            for pos1, o1 in enumerate(ops_vars):
-                for pos2, o2 in enumerate(ops_vars):
-                    if pos1 > pos2:
-                        self.solver.add(
-                            Not(And(
-                                self.x[c1][(root, o1)],
-                                self.x[c2][(root, o2)]
-                            ))
-                        )
+            if D <= 1:
+                # Root is a leaf: order by variable index
+                comp_vars = self._get_variables_for_component(c1)
+                for pos1, v1 in enumerate(comp_vars):
+                    for pos2, v2 in enumerate(comp_vars):
+                        if pos1 > pos2:
+                            self.solver.add(
+                                Not(And(
+                                    self.x[c1][(root, v1)],
+                                    self.x[c2][(root, v2)]
+                                ))
+                            )
+            else:
+                # Root is internal: order by operator
+                for pos1, o1 in enumerate(self.binaryOperators):
+                    for pos2, o2 in enumerate(self.binaryOperators):
+                        if pos1 > pos2:
+                            self.solver.add(
+                                Not(And(
+                                    self.x[c1][(root, o1)],
+                                    self.x[c2][(root, o2)]
+                                ))
+                            )
 
     def reconstructForConfig(self, model, active_justices, active_guarantees,
                              has_init, has_safety):
@@ -522,7 +509,7 @@ class GR1SATEncoding:
         Used by the incremental solver where the encoder has all possible
         components but only a subset is active in the current config.
         """
-        root = self.formulaDepth - 1
+        root = self._root_index()
         justices = [self._reconstructPropFormula(j, root, model)
                     for j in active_justices]
         guarantees = [self._reconstructPropFormula(g, root, model)
@@ -544,18 +531,18 @@ class GR1SATEncoding:
         )
 
     def reconstructWholeFormula(self, model):
-        justices = [self._reconstructPropFormula(j, self.formulaDepth - 1, model)
+        justices = [self._reconstructPropFormula(j, self._root_index(), model)
                     for j in self.justice_names]
-        guarantees = [self._reconstructPropFormula(g, self.formulaDepth - 1, model)
+        guarantees = [self._reconstructPropFormula(g, self._root_index(), model)
                       for g in self.guarantee_names]
 
-        init_e = (self._reconstructPropFormula('init_e', self.formulaDepth - 1, model)
+        init_e = (self._reconstructPropFormula('init_e', self._root_index(), model)
                   if self.include_init else None)
-        init_s = (self._reconstructPropFormula('init_s', self.formulaDepth - 1, model)
+        init_s = (self._reconstructPropFormula('init_s', self._root_index(), model)
                   if self.include_init else None)
-        safety_e = (self._reconstructPropFormula('safety_e', self.formulaDepth - 1, model)
+        safety_e = (self._reconstructPropFormula('safety_e', self._root_index(), model)
                     if self.include_safety else None)
-        safety_s = (self._reconstructPropFormula('safety_s', self.formulaDepth - 1, model)
+        safety_s = (self._reconstructPropFormula('safety_s', self._root_index(), model)
                     if self.include_safety else None)
 
         return GR1Formula(
@@ -574,23 +561,26 @@ class GR1SATEncoding:
                 raise Exception("no true value for %s row %d" % (comp, row))
             return tt[0]
 
+        D = self.formulaDepth
         x = self.x[comp]
         l = self.l[comp]
         r = self.r[comp]
-        comp_vars = self._get_variables_for_component(comp)
         n = self.traces.numVariables
 
-        operator = getValue(rowId, x)
-
-        if operator in comp_vars:
-            if operator < n:
-                return Formula('x' + str(operator))
+        if rowId < D:
+            # Leaf node: get variable and polarity
+            var_idx = getValue(rowId, x)
+            is_negated = (model[self.neg[comp][rowId]] == True)
+            if var_idx < n:
+                base = Formula('x' + str(var_idx))
             else:
-                return Formula('x' + str(operator - n) + "'")
-        elif operator in self.unaryOperators:
-            leftChild = getValue(rowId, l)
-            return Formula([operator, self._reconstructPropFormula(comp, leftChild, model)])
-        elif operator in self.binaryOperators:
+                base = Formula('x' + str(var_idx - n) + "'")
+            if is_negated:
+                return Formula(['!', base])
+            return base
+        else:
+            # Internal node: binary operator with two children
+            operator = getValue(rowId, x)
             leftChild = getValue(rowId, l)
             rightChild = getValue(rowId, r)
             return Formula([operator,

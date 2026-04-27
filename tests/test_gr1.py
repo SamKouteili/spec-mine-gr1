@@ -129,7 +129,8 @@ def test_gr1_mining_simple():
 def test_gr1_mining_negation():
     """
     Test mining □◇J → □◇G with negation needed.
-    Target: □◇(¬x0) → □◇x1 (needs D=2 for the negation in J)
+    Target: □◇(¬x0) → □◇x1
+    With literal-leaves encoding, D=1 can express ¬x0 (single negated leaf).
     """
     spec = GR1Formula(justices=[Formula(['!', Formula('x0')])],
                       guarantees=[Formula('x1')])
@@ -160,25 +161,19 @@ def test_gr1_mining_negation():
         tracesToAccept=pos_traces[:10],
         tracesToReject=neg_traces[:5],
         operators=['&', '|', '!'],
-        depth=2
+        depth=1
     )
 
-    # D=1 should fail (can't express ¬x0 with one node)
+    # D=1 should succeed (leaf polarity handles negation)
     enc1 = GR1SATEncoding(1, traces, num_justices=1, num_guarantees=1)
     enc1.encodeFormula()
     from z3 import sat
     r1 = enc1.solver.check()
     print("D=1 result:", r1)
 
-    # D=2 should succeed
-    enc2 = GR1SATEncoding(2, traces, num_justices=1, num_guarantees=1)
-    enc2.encodeFormula()
-    r2 = enc2.solver.check()
-    print("D=2 result:", r2)
-
-    if r2 == sat:
-        model = enc2.solver.model()
-        formula = enc2.reconstructWholeFormula(model)
+    if r1 == sat:
+        model = enc1.solver.model()
+        formula = enc1.reconstructWholeFormula(model)
         print("Mined GR(1) spec:", formula.prettyPrint())
 
         # Verify consistency
@@ -191,7 +186,7 @@ def test_gr1_mining_negation():
 
         print("PASS: test_gr1_mining_negation")
     else:
-        print("FAIL: test_gr1_mining_negation — UNSAT at D=2")
+        print("FAIL: test_gr1_mining_negation — UNSAT at D=1")
 
 
 def test_gr1_evaluate_full():
